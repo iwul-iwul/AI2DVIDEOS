@@ -1,10 +1,10 @@
-// The production line: Script Room -> QA Lab -> Art Studio -> Edit Bay -> Shipping Dock.
+// The production line: Script Room -> QA Lab -> Sound Booth -> Art Studio -> Edit Bay -> Shipping Dock.
 // Research happens earlier, when ideas are added to the queue.
 
 import fs from "node:fs";
 import path from "node:path";
 import { designVideo } from "./agents/art";
-import { reviewStory, writeScript } from "./agents/claude";
+import { reviewStory, writeScript } from "./agents/brain";
 import { checkStory } from "./agents/qa";
 import {
   addIdeaAttempt,
@@ -17,6 +17,7 @@ import {
   videoPath,
 } from "./db";
 import { renderVideo } from "./render";
+import { jobAudioDir, recordVoices, voiceStatus, type BeatAudio } from "./voice";
 import type { Idea, Job, QaReport, Story } from "./types";
 
 /** A failed idea goes back in the queue until it has failed this many times, then it is skipped. */
@@ -87,21 +88,38 @@ async function produce(jobId: number, idea: Idea): Promise<void> {
 
     // QA Lab
     const story = await qaPass(jobId, draft);
+    updateJob(jobId, { stage: "voice" });
+
+    // Sound Booth
+    let voices: BeatAudio[] | undefined;
+    const vs = await voiceStatus();
+    if (vs.enabled) {
+      voices = await recordVoices(jobId, story, vs);
+      const n = voices.reduce((sum, v) => sum + (v.narration ? 1 : 0) + (v.line ? 1 : 0), 0);
+      logActivity("voice", `Recorded ${n} voice lines for "${story.title}".`);
+    } else {
+      logActivity("voice", `No voiceover for "${story.title}": ${vs.note ?? "voice is off."}`, "warn");
+    }
     updateJob(jobId, { stage: "art" });
 
     // Art Studio
-    const video = designVideo(story);
+    const video = designVideo(story, voices);
     updateJob(jobId, { video, stage: "edit" });
     logActivity("art", `Staged ${video.scenes.length} scenes for "${story.title}".`);
 
     // Edit Bay
     let last = 0;
-    await renderVideo(video, videoPath(jobId), (p) => {
-      if (p - last >= 0.02 || p === 1) {
-        last = p;
-        updateJob(jobId, { progress: p });
-      }
-    });
+    await renderVideo(
+      video,
+      videoPath(jobId),
+      (p) => {
+        if (p - last >= 0.02 || p === 1) {
+          last = p;
+          updateJob(jobId, { progress: p });
+        }
+      },
+      voices ? jobAudioDir(jobId) : undefined,
+    );
     logActivity("edit", `Rendered "${story.title}".`);
 
     // Shipping Dock

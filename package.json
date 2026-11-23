@@ -9,7 +9,9 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "studio": "remotion studio remotion/index.ts",
-    "render:sample": "tsx scripts/render-sample.ts"
+    "render:sample": "tsx scripts/render-sample.ts",
+    "setup:voice": "node scripts/setup-voice.mjs",
+    "setup:ollama": "ollama pull qwen2.5:7b"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

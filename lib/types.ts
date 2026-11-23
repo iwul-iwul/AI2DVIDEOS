@@ -68,9 +68,19 @@ export interface Story {
   hashtags: string[];
 }
 
+export interface AudioCue {
+  /** File name inside the job's audio folder. */
+  src: string;
+  frames: number;
+}
+
 /** A beat with timing, produced by the Art Studio and drawn by Remotion. */
 export interface Scene extends Beat {
   durationInFrames: number;
+  /** Frame (within the scene) where the dialogue line starts. */
+  lineStart: number;
+  narrationAudio: AudioCue | null;
+  lineAudio: AudioCue | null;
   /** Camera move for this scene. */
   camera: "push" | "pan-left" | "pan-right" | "still";
 }
@@ -81,10 +91,12 @@ export interface VideoProps {
   titleFrames: number;
   endFrames: number;
   scenes: Scene[];
+  /** Base URL the renderer loads voice files from; null for a silent video. */
+  audioBase: string | null;
   [key: string]: unknown;
 }
 
-export const STAGES = ["script", "qa", "art", "edit", "ship"] as const;
+export const STAGES = ["script", "qa", "voice", "art", "edit", "ship"] as const;
 export type Stage = (typeof STAGES)[number];
 
 export interface Job {
@@ -122,7 +134,7 @@ export interface AutopilotSettings {
 
 export type AutopilotPhase = "idle" | "researching" | "picking" | "producing";
 
-export type Agent = "autopilot" | "research" | "producer" | "script" | "qa" | "art" | "edit" | "ship";
+export type Agent = "autopilot" | "research" | "producer" | "script" | "qa" | "voice" | "art" | "edit" | "ship";
 
 export interface Activity {
   id: number;

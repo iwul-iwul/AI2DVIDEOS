@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export type RoomId = "producer" | "qa" | "research" | "script" | "art" | "edit" | "ship";
+export type RoomId = "producer" | "qa" | "research" | "script" | "art" | "edit" | "voice" | "ship";
 
 export interface RoomInfo {
   id: RoomId;
@@ -18,6 +18,7 @@ export const ROOMS: RoomInfo[] = [
   { id: "script", name: "Script Room", agent: "Quill", role: "Writes the story, cast and dialogue" },
   { id: "art", name: "Art Studio", agent: "Dot", role: "Stages each scene and camera move" },
   { id: "edit", name: "Edit Bay", agent: "Splice", role: "Animates and renders the MP4" },
+  { id: "voice", name: "Sound Booth", agent: "Echo", role: "Records the narrator and character voices" },
   { id: "ship", name: "Shipping Dock", agent: "Hatch", role: "Packs the video with a caption" },
 ];
 
@@ -35,10 +36,12 @@ const LAYOUT: Record<RoomId, Box> = {
   script: { x: 460, y: 430, w: 400, h: 240 },
   art: { x: 40, y: 690, w: 400, h: 240 },
   edit: { x: 460, y: 690, w: 400, h: 240 },
-  ship: { x: 40, y: 950, w: 820, h: 240 },
+  voice: { x: 40, y: 950, w: 400, h: 240 },
+  ship: { x: 460, y: 950, w: 400, h: 240 },
 };
 
 const WALLS: Record<RoomId, [string, string]> = {
+  voice: ["#3a3a5c", "#2c2c48"],
   producer: ["#9a3b4f", "#7d2f40"],
   qa: ["#2f8a7a", "#246e61"],
   research: ["#2f6f8f", "#245873"],
@@ -49,6 +52,7 @@ const WALLS: Record<RoomId, [string, string]> = {
 };
 
 const LOOKS: Record<RoomId, { skin: string; hair: string; shirt: string }> = {
+  voice: { skin: "#e8b48a", hair: "#ef476f", shirt: "#ffd166" },
   producer: { skin: "#a86b4c", hair: "#2b1a12", shirt: "#f4f1de" },
   qa: { skin: "#f6d1b5", hair: "#c9a227", shirt: "#8338ec" },
   research: { skin: "#f2c9a0", hair: "#3b2a20", shirt: "#ffd166" },
@@ -274,38 +278,70 @@ function RoomArt({ id, b, working }: { id: RoomId; b: Box; working: boolean }) {
           <Worker id={id} x={b.x + 130} y={floor} working={working} />
         </>
       );
+    case "voice":
+      return (
+        <>
+          {/* foam panels */}
+          {[0, 1, 2, 3].map((r) =>
+            [0, 1, 2, 3, 4, 5].map((c) => (
+              <path
+                key={`${r}-${c}`}
+                d={`M${b.x + 30 + c * 30} ${b.y + 60 + r * 30} l15 -24 l15 24z`}
+                fill={(r + c) % 2 ? "#4a4a70" : "#55557d"}
+              />
+            )),
+          )}
+          {/* on-air sign */}
+          <rect x={b.x + 250} y={b.y + 56} width="110" height="34" rx="8" fill={working ? "#ef476f" : "#6c757d"} stroke="#1b1b2f" strokeWidth="3" />
+          <text x={b.x + 305} y={b.y + 79} textAnchor="middle" fill="#fff" fontSize="15" fontWeight="800" fontFamily="var(--font-display)">
+            ON AIR
+          </text>
+          {/* mic stand */}
+          <path d={`M${b.x + 250} ${floor} v-90`} stroke="#1b1b2f" strokeWidth="5" />
+          <path d={`M${b.x + 234} ${floor} h32`} stroke="#1b1b2f" strokeWidth="6" strokeLinecap="round" />
+          <rect x={b.x + 238} y={floor - 122} width="24" height="38" rx="12" fill="#adb5bd" stroke="#1b1b2f" strokeWidth="3" />
+          {working &&
+            [0, 1, 2].map((i) => (
+              <path
+                key={i}
+                className="sound-wave"
+                style={{ animationDelay: `${i * 0.25}s` }}
+                d={`M${b.x + 276 + i * 14} ${floor - 118} q10 15 0 30`}
+                stroke="#ffd166"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+              />
+            ))}
+          {/* script stand */}
+          <rect x={b.x + 320} y={floor - 100} width="44" height="30" fill="#fff" stroke="#1b1b2f" strokeWidth="3" />
+          <path d={`M${b.x + 342} ${floor - 70} v70`} stroke="#1b1b2f" strokeWidth="4" />
+          <Worker id={id} x={b.x + 200} y={floor} working={working} />
+        </>
+      );
     case "ship":
       return (
         <>
-          {/* loading door */}
-          <rect x={b.x + 620} y={b.y + 50} width="170" height={b.h - 80} fill="#adb5bd" stroke="#1b1b2f" strokeWidth="3" />
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <rect key={i} x={b.x + 620} y={b.y + 64 + i * 22} width="170" height="3" fill="#6c757d" />
-          ))}
           {/* shelves */}
-          <rect x={b.x + 20} y={b.y + 80} width="150" height="8" fill="#7a4e2d" />
-          <rect x={b.x + 20} y={b.y + 140} width="150" height="8" fill="#7a4e2d" />
+          <rect x={b.x + 230} y={b.y + 100} width="150" height="8" fill="#7a4e2d" />
           {[0, 1, 2].map((i) => (
-            <rect key={i} x={b.x + 30 + i * 45} y={b.y + 48} width="36" height="32" fill="#d4a373" stroke="#1b1b2f" strokeWidth="2.5" />
-          ))}
-          {[0, 1].map((i) => (
-            <rect key={i} x={b.x + 40 + i * 60} y={b.y + 108} width="44" height="32" fill="#d4a373" stroke="#1b1b2f" strokeWidth="2.5" />
+            <rect key={i} x={b.x + 240 + i * 45} y={b.y + 68} width="36" height="32" fill="#d4a373" stroke="#1b1b2f" strokeWidth="2.5" />
           ))}
           {/* conveyor */}
-          <rect x={b.x + 250} y={floor - 40} width="360" height="16" rx="8" fill="#495057" stroke="#1b1b2f" strokeWidth="3" />
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-            <circle key={i} cx={b.x + 266 + i * 54} cy={floor - 32} r="5" fill="#adb5bd" />
+          <rect x={b.x + 140} y={floor - 40} width="240" height="16" rx="8" fill="#495057" stroke="#1b1b2f" strokeWidth="3" />
+          {[0, 1, 2, 3, 4].map((i) => (
+            <circle key={i} cx={b.x + 156 + i * 52} cy={floor - 32} r="5" fill="#adb5bd" />
           ))}
-          <rect x={b.x + 270} y={floor - 24} width="10" height="24" fill="#495057" />
-          <rect x={b.x + 580} y={floor - 24} width="10" height="24" fill="#495057" />
-          <g transform={`translate(${b.x + 300} ${floor - 82})`}>
-           <g className={working ? "parcel parcel-move" : "parcel"}>
-            <rect width="54" height="42" fill="#d4a373" stroke="#1b1b2f" strokeWidth="3" />
-            <path d="M0 0 L27 14 L54 0" fill="none" stroke="#1b1b2f" strokeWidth="2" />
-            <path d="M20 20 l10 6 l-10 6z" fill="#ef476f" />
-           </g>
+          <rect x={b.x + 160} y={floor - 24} width="10" height="24" fill="#495057" />
+          <rect x={b.x + 350} y={floor - 24} width="10" height="24" fill="#495057" />
+          <g transform={`translate(${b.x + 160} ${floor - 82})`}>
+            <g className={working ? "parcel parcel-move" : "parcel"}>
+              <rect width="54" height="42" fill="#d4a373" stroke="#1b1b2f" strokeWidth="3" />
+              <path d="M0 0 L27 14 L54 0" fill="none" stroke="#1b1b2f" strokeWidth="2" />
+              <path d="M20 20 l10 6 l-10 6z" fill="#ef476f" />
+            </g>
           </g>
-          <Worker id={id} x={b.x + 210} y={floor} working={working} />
+          <Worker id={id} x={b.x + 90} y={floor} working={working} />
         </>
       );
   }

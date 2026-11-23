@@ -2,7 +2,7 @@
 // Each run: refill the queue from the channel brief, let the Producer pick a
 // pitch, and send it down the production line.
 
-import { pickBestIdea, pitchFromBrief } from "./agents/claude";
+import { pickBestIdea, pitchFromBrief } from "./agents/brain";
 import { addIdeas, getAutopilot, listJobs, logActivity, pastTitles, queuedIdeas, saveAutopilot } from "./db";
 import { startProduction } from "./pipeline";
 import type { AutopilotPhase, AutopilotSettings } from "./types";

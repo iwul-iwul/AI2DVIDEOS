@@ -1,43 +1,10 @@
-// Research Desk (story pitches) and Script Room (story writer), powered by Claude with structured outputs.
+// The writing agents: Research Desk, Producer, Script Room and the QA editor.
+// Each asks the current engine (Ollama, Claude, or demo templates) for structured answers.
 
-import Anthropic from "@anthropic-ai/sdk";
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
+import { ask, currentEngine } from "../engine";
 import { ACCESSORIES, ACTIONS, COLORS, MOODS, SETTINGS, TIMES, type Idea, type Story } from "../types";
 import { demoIdeas, demoPitchesFromBrief, demoScript, type IdeaInput } from "./demo";
-
-const MODEL = "claude-opus-5-5";
-
-/**
- * Live mode needs a credential. REELHOUSE_DEMO=1 forces demo mode;
- * REELHOUSE_DEMO=0 forces live mode (for an `ant auth login` profile).
- */
-export function isDemoMode(): boolean {
-  if (process.env.REELHOUSE_DEMO === "1") return true;
-  if (process.env.REELHOUSE_DEMO === "0") return false;
-  return !process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN;
-}
-
-let client: Anthropic | null = null;
-const getClient = () => (client ??= new Anthropic());
-
-async function ask<T extends z.ZodType>(system: string, prompt: string, schema: T): Promise<z.infer<T>> {
-  const response = await getClient().beta.messages.parse({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "medium", format: betaZodOutputFormat(schema) },
-    system,
-    messages: [{ role: "user", content: prompt }],
-  });
-  if (response.stop_reason === "refusal") {
-    throw new Error(`Claude declined this request${response.stop_details?.explanation ? `: ${response.stop_details.explanation}` : "."}`);
-  }
-  if (response.stop_reason === "max_tokens") throw new Error("Claude ran out of room before finishing.");
-  if (!response.parsed_output) throw new Error("Claude's answer did not match the expected format.");
-  return response.parsed_output as z.infer<T>;
-}
 
 const PitchSchema = z.object({
   ideas: z
@@ -52,8 +19,10 @@ const PitchSchema = z.object({
 });
 
 export async function researchIdeas(topic: string): Promise<Omit<IdeaInput, "topic">[]> {
-  if (isDemoMode()) return demoIdeas(topic);
+  const engine = await currentEngine();
+  if (engine === "demo") return demoIdeas(topic);
   const out = await ask(
+    engine,
     "You develop ideas for 30 to 45 second animated short stories posted as vertical videos (TikTok, Reels, Shorts). Stories star simple, round cartoon characters, need at most 3 characters, and must land a clear emotional payoff or twist in under a minute. Keep them original and suitable for all ages.",
     `Theme or prompt from the creator: ${topic}\n\nPitch 3 to 5 different short stories. Vary the genre (for example comedy, heartwarming, mystery, adventure, spooky-cute).`,
     PitchSchema,
@@ -98,8 +67,10 @@ const StorySchema = z.object({
 });
 
 export async function writeScript(idea: IdeaInput): Promise<Story> {
-  if (isDemoMode()) return demoScript(idea);
+  const engine = await currentEngine();
+  if (engine === "demo") return demoScript(idea);
   const out = await ask(
+    engine,
     "You are the head writer of an animated short-story channel. You write 30 to 45 second stories for vertical video, told through narrator captions and short speech bubbles over simple 2D scenes. Every beat moves the story. Show emotion through the characters' moods and actions. End on the payoff, not on a moral lecture. Keep it original and suitable for all ages.",
     `Write this story.\n\nTheme: ${idea.topic}\nTitle: ${idea.title}\nLogline: ${idea.hook}\nGenre and twist: ${idea.angle}`,
     StorySchema,
@@ -128,8 +99,10 @@ const BriefPitchSchema = z.object({
 /** Research Desk on autopilot: invents themes from the channel brief and pitches stories, avoiding past titles. */
 export async function pitchFromBrief(brief: string, pastTitles: string[]): Promise<IdeaInput[]> {
   const used = new Set(pastTitles.map((t) => t.trim().toLowerCase()));
-  if (isDemoMode()) return demoPitchesFromBrief(pastTitles);
+  const engine = await currentEngine();
+  if (engine === "demo") return demoPitchesFromBrief(pastTitles);
   const out = await ask(
+    engine,
     "You develop ideas for 30 to 45 second animated short stories posted as vertical videos. Stories star simple, round cartoon characters, need at most 3 characters, and land a clear emotional payoff or twist in under a minute. Keep them original and suitable for all ages. Never reuse a title or premise the channel has already made.",
     `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nTitles already used (do not repeat these or close variations):\n${pastTitles.slice(0, 120).join("\n") || "(none yet)"}\n\nPitch 4 to 6 new stories that fit the brief.`,
     BriefPitchSchema,
@@ -146,8 +119,10 @@ const PickSchema = z.object({
 
 /** Producer: picks the strongest waiting pitch. */
 export async function pickBestIdea(ideas: Idea[], brief: string): Promise<{ id: number; reason: string }> {
-  if (ideas.length === 1 || isDemoMode()) return { id: ideas[0].id, reason: "Oldest pitch in the queue." };
+  const engine = await currentEngine();
+  if (ideas.length === 1 || engine === "demo") return { id: ideas[0].id, reason: "Oldest pitch in the queue." };
   const out = await ask(
+    engine,
     "You are the producer of an animated short-story channel. You pick which pitch to make next: the one most likely to hold a viewer for 40 seconds and get shared, while fitting the channel brief.",
     `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nWaiting pitches:\n${ideas
       .map((i) => `id ${i.id}: "${i.title}". ${i.hook} (${i.angle})`)
@@ -165,12 +140,20 @@ const ReviewSchema = z.object({
   reject: z.boolean().describe("true only if the story is unfixable or unsuitable for all ages"),
 });
 
-/** QA Lab: Claude reviews the story for plot holes, pacing and suitability, and fixes it once. */
+/** QA Lab: the AI editor reviews the story for plot holes, pacing and suitability, and fixes it once. */
 export async function reviewStory(story: Story): Promise<{ approved: boolean; issues: string[]; fixed: Story | null; reject: boolean }> {
-  if (isDemoMode()) return { approved: true, issues: [], fixed: null, reject: false };
-  return ask(
+  const engine = await currentEngine();
+  if (engine === "demo") return { approved: true, issues: [], fixed: null, reject: false };
+  try {
+    return await ask(
+    engine,
     "You are the story editor for an animated short-story channel (30 to 45 second vertical videos, all ages). Check the story for: plot holes, characters who act or speak without being introduced, a missing payoff, beats that don't move the story, text too long to read in a few seconds, and anything not suitable for all ages. Be practical: only flag real problems. If you can fix them, return the full corrected story in the same format, keeping what works.",
     `Story JSON:\n${JSON.stringify(story)}`,
     ReviewSchema,
   );
+  } catch (err) {
+    // The rule checks already ran; a failed editor pass shouldn't stop the story.
+    const why = err instanceof Error ? err.message : String(err);
+    return { approved: true, issues: [`The editor pass couldn't run (${why}); rule checks only.`], fixed: null, reject: false };
+  }
 }

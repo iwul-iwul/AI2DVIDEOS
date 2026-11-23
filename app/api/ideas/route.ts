@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { researchIdeas } from "@/lib/agents/claude";
+import { researchIdeas } from "@/lib/agents/brain";
 import { addIdeas } from "@/lib/db";
 
 export const dynamic = "force-dynamic";

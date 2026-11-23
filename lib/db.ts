@@ -151,6 +151,17 @@ export function pastTitles(limit = 200): string[] {
 
 // ---- Settings ----
 
+export function getSetting<T>(key: string): T | null {
+  const r = db().prepare(`SELECT value FROM settings WHERE key = ?`).get(key) as { value: string } | undefined;
+  return r ? (JSON.parse(r.value) as T) : null;
+}
+
+export function saveSetting(key: string, value: unknown): void {
+  db()
+    .prepare(`INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`)
+    .run(key, JSON.stringify(value));
+}
+
 const DEFAULT_AUTOPILOT: AutopilotSettings = {
   enabled: false,
   brief: "",

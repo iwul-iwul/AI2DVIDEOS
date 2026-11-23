@@ -1,6 +1,6 @@
 import React from "react";
 import { loadFont } from "@remotion/google-fonts/Fredoka";
-import { AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import type { Character as CharacterT, Scene, VideoProps } from "../lib/types";
 import { Background, GROUND_Y } from "./Backgrounds";
 import { Character } from "./Character";
@@ -74,7 +74,7 @@ const Bubble: React.FC<{ name: string; line: string; x: number; delay: number }>
   );
 };
 
-const SceneView: React.FC<{ scene: Scene; characters: CharacterT[] }> = ({ scene, characters }) => {
+const SceneView: React.FC<{ scene: Scene; characters: CharacterT[]; audioBase: string | null }> = ({ scene, characters, audioBase }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
@@ -94,8 +94,8 @@ const SceneView: React.FC<{ scene: Scene; characters: CharacterT[] }> = ({ scene
   const cast = scene.cast.filter((c) => characters[c.who]).slice(0, 3);
   const xs = castX(cast.length);
   const hasLine = scene.speaker >= 0 && !!characters[scene.speaker] && !!scene.line;
-  const lineDelay = 10;
-  const talkEnd = lineDelay + 8 + scene.line.split(/\s+/).length * 7;
+  const lineDelay = scene.lineStart ?? 10;
+  const talkEnd = scene.lineAudio ? lineDelay + scene.lineAudio.frames : lineDelay + 8 + scene.line.split(/\s+/).length * 7;
 
   return (
     <AbsoluteFill style={{ opacity: fadeIn, overflow: "hidden" }}>
@@ -143,6 +143,16 @@ const SceneView: React.FC<{ scene: Scene; characters: CharacterT[] }> = ({ scene
           );
         })}
       </AbsoluteFill>
+      {audioBase && scene.narrationAudio && (
+        <Sequence from={6} layout="none">
+          <Audio src={`${audioBase}${scene.narrationAudio.src}`} />
+        </Sequence>
+      )}
+      {audioBase && hasLine && scene.lineAudio && (
+        <Sequence from={lineDelay} layout="none">
+          <Audio src={`${audioBase}${scene.lineAudio.src}`} />
+        </Sequence>
+      )}
       <Narration text={scene.narration} />
       {hasLine && (
         <Bubble
@@ -207,7 +217,7 @@ const EndCard: React.FC<{ characters: CharacterT[] }> = ({ characters }) => {
 };
 
 /** The full vertical short story: title card, scenes, end card. */
-export const StoryVideo: React.FC<VideoProps> = ({ title, characters, scenes, titleFrames, endFrames }) => {
+export const StoryVideo: React.FC<VideoProps> = ({ title, characters, scenes, titleFrames, endFrames, audioBase }) => {
   let from = titleFrames;
   return (
     <AbsoluteFill style={{ background: "#111" }}>
@@ -217,7 +227,7 @@ export const StoryVideo: React.FC<VideoProps> = ({ title, characters, scenes, ti
       {scenes.map((scene, i) => {
         const seq = (
           <Sequence key={i} from={from} durationInFrames={scene.durationInFrames}>
-            <SceneView scene={scene} characters={characters} />
+            <SceneView scene={scene} characters={characters} audioBase={audioBase ?? null} />
           </Sequence>
         );
         from += scene.durationInFrames;

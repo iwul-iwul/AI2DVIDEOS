@@ -5,7 +5,15 @@ import type { Activity, AutopilotPhase, AutopilotSettings, CharacterColor, Idea,
 import { Building, ROOMS, type RoomId } from "./Building";
 
 interface State {
-  demo: boolean;
+  engine: {
+    choice: "auto" | "ollama" | "claude" | "demo";
+    engine: "ollama" | "claude" | "demo";
+    model: string;
+    ollama: { running: boolean; hasModel: boolean };
+    claudeKey: boolean;
+    note: string | null;
+  };
+  voice: { enabled: boolean; piper: boolean; narrator: boolean; characters: boolean; note: string | null };
   ideas: Idea[];
   jobs: Job[];
   autopilot: AutopilotSettings & { phase: AutopilotPhase };
@@ -13,6 +21,7 @@ interface State {
 }
 
 const STAGE_ROOM: Partial<Record<Job["stage"], RoomId>> = {
+  voice: "voice",
   qa: "qa",
   script: "script",
   art: "art",
@@ -124,8 +133,12 @@ export default function Studio() {
           </div>
         </div>
         {state && (
-          <span className={`mode ${state.demo ? "mode-demo" : "mode-live"}`} title={state.demo ? "No Claude API key found. Research and scripts use templates." : "Research and scripts are written by Claude."}>
-            {state.demo ? "Demo mode" : "Live: Claude"}
+          <span
+            className={`mode ${state.engine.engine === "demo" ? "mode-demo" : "mode-live"}`}
+            title={state.engine.note ?? "The AI that writes the stories. Change it in the Producer's Office."}
+          >
+            {state.engine.engine === "ollama" ? `Ollama · ${state.engine.model}` : state.engine.engine === "claude" ? "Claude" : "Demo mode"}
+            {state.voice.enabled ? " · Voice on" : " · Silent"}
           </span>
         )}
       </header>
@@ -171,6 +184,26 @@ export default function Studio() {
 
             {selected === "producer" && state && <AutopilotPanel state={state} onChange={refresh} />}
 
+            {selected === "voice" && state && (
+              <div className="job">
+                <p>
+                  <span className={state.voice.enabled ? "dot-ok" : "dot-off"} /> Voiceover is{" "}
+                  <strong>{state.voice.enabled ? (state.voice.characters ? "on, with a voice for each character" : "on, with one voice") : "off"}</strong>.
+                </p>
+                {state.voice.note && <p className="muted small">{state.voice.note}</p>}
+                {focusJob?.video && (
+                  <ul className="issues small">
+                    {focusJob.video.scenes.map((sc, i) => (
+                      <li key={i}>
+                        Scene {i + 1}: {sc.narrationAudio ? `narration ${(sc.narrationAudio.frames / 30).toFixed(1)}s` : "no narration audio"}
+                        {sc.lineAudio ? `, ${focusJob.video!.characters[sc.speaker]?.name ?? "line"} ${(sc.lineAudio.frames / 30).toFixed(1)}s` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             {selected === "qa" && focusJob && (
               <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
                 {focusJob.qa ? (
@@ -194,7 +227,7 @@ export default function Studio() {
               </JobHeader>
             )}
 
-            {selected !== "research" && selected !== "producer" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
+            {selected !== "research" && selected !== "producer" && selected !== "voice" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
 
             {selected === "script" && focusJob && (
               <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
@@ -349,6 +382,7 @@ const AGENT_NAMES: Record<Activity["agent"], string> = {
   qa: "Vera",
   art: "Dot",
   edit: "Splice",
+  voice: "Echo",
   ship: "Hatch",
 };
 
@@ -424,6 +458,47 @@ function AutopilotPanel({ state, onChange }: { state: State; onChange: () => Pro
         <button disabled={!dirty || saving} onClick={() => save({ brief, storiesPerDay: perDay })}>
           Save
         </button>
+      </div>
+
+      <div className="setup">
+        <h3>Studio setup</h3>
+        <div className="setup-row">
+          <label htmlFor="engine" className="inline">
+            Story writer
+          </label>
+          <select
+            id="engine"
+            value={state.engine.choice}
+            disabled={saving}
+            onChange={async (e) => {
+              setSaving(true);
+              try {
+                await fetch("/api/engine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ choice: e.target.value }) });
+                await onChange();
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            <option value="auto">Automatic (Ollama, then Claude, then demo)</option>
+            <option value="ollama">Ollama (free, on this computer)</option>
+            <option value="claude">Claude (needs an API key)</option>
+            <option value="demo">Demo templates</option>
+          </select>
+        </div>
+        <div className="setup-row small">
+          <span className={state.engine.ollama.running && state.engine.ollama.hasModel ? "dot-ok" : "dot-off"} />
+          Ollama {state.engine.ollama.running ? (state.engine.ollama.hasModel ? "ready" : "running, model not downloaded") : "not running"}
+          <span className={state.engine.claudeKey ? "dot-ok" : "dot-off"} />
+          Claude key {state.engine.claudeKey ? "found" : "not set"}
+        </div>
+        <div className="setup-row small">
+          <span className={state.voice.enabled ? "dot-ok" : "dot-off"} />
+          Voiceover {state.voice.enabled ? (state.voice.characters ? "on, with character voices" : "on, one voice") : "off"}
+        </div>
+        {(state.engine.note || state.voice.note) && (
+          <p className="muted small">{[state.engine.note, state.voice.note].filter(Boolean).join(" ")}</p>
+        )}
       </div>
 
       <h3>Activity</h3>

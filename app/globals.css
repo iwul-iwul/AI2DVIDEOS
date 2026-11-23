@@ -125,6 +125,7 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .light-cone { transition: opacity 0.4s; }
 .clap { transform-box: fill-box; transform-origin: left bottom; animation: clap 0.8s ease-in-out infinite; }
 .tick { stroke-dasharray: 30; animation: tick 1.6s ease-in-out infinite; }
+.sound-wave { animation: dot 0.9s infinite; }
 .scan { animation: scan 1.6s ease-in-out infinite alternate; }
 
 @keyframes clap { 0%, 60%, 100% { transform: rotate(0); } 30% { transform: rotate(-22deg); } }
@@ -141,7 +142,7 @@ button.ghost { background: #fff; color: #1b1b2f; }
 @keyframes type { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
 @keyframes scrub { from { transform: translateX(0); } to { transform: translateX(140px); } }
-@keyframes convey { from { transform: translateX(0); } to { transform: translateX(260px); } }
+@keyframes convey { from { transform: translateX(0); } to { transform: translateX(150px); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -168,3 +169,9 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .pill-qa-approved, .pill-qa-fixed { background: var(--good); color: #06332a; }
 .pill-qa-rejected { background: #b00020; color: #fff; }
 .idea-skipped { opacity: 0.6; }
+
+.setup { margin-top: 18px; border-top: 2px dashed var(--line); padding-top: 12px; }
+.setup-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+.dot-ok, .dot-off { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px solid #1b1b2f; flex: none; }
+.dot-ok { background: var(--good); }
+.dot-off { background: #ced4da; }
