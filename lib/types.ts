@@ -27,7 +27,9 @@ export interface Idea {
   hook: string;
   /** Genre and the twist that makes it worth watching. */
   angle: string;
-  status: "queued" | "in_production" | "done";
+  status: "queued" | "in_production" | "done" | "skipped";
+  /** Failed production attempts so far. */
+  attempts: number;
   createdAt: string;
 }
 
@@ -82,7 +84,7 @@ export interface VideoProps {
   [key: string]: unknown;
 }
 
-export const STAGES = ["script", "art", "edit", "ship"] as const;
+export const STAGES = ["script", "qa", "art", "edit", "ship"] as const;
 export type Stage = (typeof STAGES)[number];
 
 export interface Job {
@@ -93,6 +95,7 @@ export interface Job {
   progress: number;
   script: Story | null;
   video: VideoProps | null;
+  qa: QaReport | null;
   error: string | null;
   createdAt: string;
   updatedAt: string;
@@ -101,3 +104,30 @@ export interface Job {
 export const FPS = 30;
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
+
+/** What the QA Lab found and did before a story was rendered. */
+export interface QaReport {
+  verdict: "approved" | "fixed" | "rejected";
+  issues: string[];
+}
+
+export interface AutopilotSettings {
+  enabled: boolean;
+  /** The channel brief: what kind of stories this channel makes. */
+  brief: string;
+  storiesPerDay: number;
+  /** ISO time of the next scheduled story, or null. */
+  nextRunAt: string | null;
+}
+
+export type AutopilotPhase = "idle" | "researching" | "picking" | "producing";
+
+export type Agent = "autopilot" | "research" | "producer" | "script" | "qa" | "art" | "edit" | "ship";
+
+export interface Activity {
+  id: number;
+  at: string;
+  agent: Agent;
+  message: string;
+  level: "info" | "warn" | "error";
+}

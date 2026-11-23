@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type { CharacterColor, Idea, Job } from "@/lib/types";
+import type { Activity, AutopilotPhase, AutopilotSettings, CharacterColor, Idea, Job } from "@/lib/types";
 import { Building, ROOMS, type RoomId } from "./Building";
 
 interface State {
   demo: boolean;
   ideas: Idea[];
   jobs: Job[];
+  autopilot: AutopilotSettings & { phase: AutopilotPhase };
+  activity: Activity[];
 }
 
 const STAGE_ROOM: Partial<Record<Job["stage"], RoomId>> = {
+  qa: "qa",
   script: "script",
   art: "art",
   edit: "edit",
@@ -32,7 +35,7 @@ const isActive = (j: Job) => j.stage !== "done" && j.stage !== "failed";
 
 export default function Studio() {
   const [state, setState] = useState<State | null>(null);
-  const [selected, setSelected] = useState<RoomId>("research");
+  const [selected, setSelected] = useState<RoomId>("producer");
   const [topic, setTopic] = useState("");
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,15 @@ export default function Studio() {
   const ideas = state?.ideas ?? [];
   const activeJob = jobs.find(isActive) ?? null;
   const focusJob = jobs.find((j) => j.id === focusJobId) ?? activeJob ?? jobs[0] ?? null;
-  const activeRoom: RoomId | null = researching ? "research" : activeJob ? (STAGE_ROOM[activeJob.stage] ?? null) : null;
+  const phase = state?.autopilot.phase ?? "idle";
+  const activeRoom: RoomId | null =
+    researching || phase === "researching"
+      ? "research"
+      : activeJob
+        ? (STAGE_ROOM[activeJob.stage] ?? null)
+        : phase === "picking"
+          ? "producer"
+          : null;
   const ideaById = useMemo(() => new Map(ideas.map((i) => [i.id, i])), [ideas]);
   const finished = jobs.filter((j) => j.stage === "done");
 
@@ -158,7 +169,32 @@ export default function Studio() {
               </form>
             )}
 
-            {selected !== "research" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
+            {selected === "producer" && state && <AutopilotPanel state={state} onChange={refresh} />}
+
+            {selected === "qa" && focusJob && (
+              <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
+                {focusJob.qa ? (
+                  <>
+                    <p>
+                      <span className={`pill pill-qa-${focusJob.qa.verdict}`}>
+                        {focusJob.qa.verdict === "approved" ? "Approved as written" : focusJob.qa.verdict === "fixed" ? "Fixed and approved" : "Rejected"}
+                      </span>
+                    </p>
+                    {focusJob.qa.issues.length > 0 && (
+                      <ul className="issues">
+                        {focusJob.qa.issues.map((x, i) => (
+                          <li key={i}>{x}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : (
+                  <p className="muted">{focusJob.stage === "script" ? "Vera is waiting for the story." : "No QA report for this story."}</p>
+                )}
+              </JobHeader>
+            )}
+
+            {selected !== "research" && selected !== "producer" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
 
             {selected === "script" && focusJob && (
               <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
@@ -269,6 +305,7 @@ export default function Studio() {
                         </button>
                       )}
                       {idea.status === "in_production" && <span className="pill pill-hot">In production</span>}
+                      {idea.status === "skipped" && <span className="pill pill-failed">Skipped</span>}
                       {idea.status === "done" && job && (
                         <button
                           className="ghost"
@@ -288,6 +325,120 @@ export default function Studio() {
           </section>
         </aside>
       </main>
+    </div>
+  );
+}
+
+const PER_DAY = [1, 2, 3, 4, 6, 8, 12, 24];
+
+function fmtTime(iso: string | null): string {
+  if (!iso) return "not scheduled";
+  const d = new Date(iso);
+  const mins = Math.round((d.getTime() - Date.now()) / 60000);
+  const clock = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (mins <= 0) return "now";
+  if (mins < 60) return `${clock} (in ${mins} min)`;
+  return `${d.toLocaleDateString([], { weekday: "short" })} ${clock}`;
+}
+
+const AGENT_NAMES: Record<Activity["agent"], string> = {
+  autopilot: "Autopilot",
+  research: "Pip",
+  producer: "Bea",
+  script: "Quill",
+  qa: "Vera",
+  art: "Dot",
+  edit: "Splice",
+  ship: "Hatch",
+};
+
+function AutopilotPanel({ state, onChange }: { state: State; onChange: () => Promise<void> }) {
+  const ap = state.autopilot;
+  const [brief, setBrief] = useState(ap.brief);
+  const [perDay, setPerDay] = useState(ap.storiesPerDay);
+  const [saving, setSaving] = useState(false);
+  const dirty = brief.trim() !== ap.brief || perDay !== ap.storiesPerDay;
+
+  async function save(patch: Record<string, unknown>) {
+    setSaving(true);
+    try {
+      await fetch("/api/autopilot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+      await onChange();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const status =
+    ap.phase === "researching"
+      ? "Pitching new stories…"
+      : ap.phase === "picking"
+        ? "Picking the next story…"
+        : ap.phase === "producing"
+          ? "Making a story…"
+          : ap.enabled
+            ? `Next story: ${fmtTime(ap.nextRunAt)}`
+            : "Off. Stories are only made when you press Produce.";
+
+  return (
+    <div className="autopilot">
+      <div className="ap-row">
+        <button
+          className={`switch ${ap.enabled ? "switch-on" : ""}`}
+          role="switch"
+          aria-checked={ap.enabled}
+          disabled={saving}
+          onClick={() => save({ enabled: !ap.enabled, brief, storiesPerDay: perDay })}
+        >
+          <span className="knob" />
+          <span className="switch-label">{ap.enabled ? "Autopilot on" : "Autopilot off"}</span>
+        </button>
+        {ap.enabled && ap.phase === "idle" && (
+          <button className="ghost" disabled={saving} onClick={() => save({ runNow: true })}>
+            Make one now
+          </button>
+        )}
+      </div>
+      <p className="ap-status">{status}</p>
+
+      <label htmlFor="brief">Channel brief</label>
+      <textarea
+        id="brief"
+        rows={3}
+        maxLength={600}
+        value={brief}
+        onChange={(e) => setBrief(e.target.value)}
+        placeholder="e.g. Cozy, funny stories about animals and their friendships, for all ages."
+      />
+      <div className="row">
+        <label htmlFor="perday" className="inline">
+          Stories per day
+        </label>
+        <select id="perday" value={perDay} onChange={(e) => setPerDay(Number(e.target.value))}>
+          {PER_DAY.map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+        <button disabled={!dirty || saving} onClick={() => save({ brief, storiesPerDay: perDay })}>
+          Save
+        </button>
+      </div>
+
+      <h3>Activity</h3>
+      {state.activity.length === 0 ? (
+        <p className="muted small">Nothing yet. Turn on autopilot and the agents will log what they do here.</p>
+      ) : (
+        <ul className="log">
+          {state.activity.map((a) => (
+            <li key={a.id} className={`log-${a.level}`}>
+              <time className="muted small">{new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</time>
+              <strong>{AGENT_NAMES[a.agent]}</strong> <span>{a.message}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -95,3 +95,23 @@ export function demoScript(idea: IdeaInput): Story {
     hashtags: ["#shortstory", "#animation", "#storytime", "#2danimation"],
   };
 }
+
+const DEMO_HEROES = ["Owl", "Snail", "Dragon", "Robot", "Cloud", "Cactus", "Penguin", "Comet", "Fox", "Teapot"];
+
+/** Demo stand-in for the Research Desk on autopilot: rotates through heroes so titles don't repeat. */
+export function demoPitchesFromBrief(pastTitles: string[]): IdeaInput[] {
+  const used = new Set(pastTitles.map((t) => t.toLowerCase()));
+  for (let round = 0; round < DEMO_HEROES.length * 3; round++) {
+    const hero = DEMO_HEROES[(pastTitles.length + round) % DEMO_HEROES.length];
+    const suffix = round >= DEMO_HEROES.length ? ` ${Math.floor(round / DEMO_HEROES.length) + 1}` : "";
+    const topic = `a curious ${hero.toLowerCase()}`;
+    const ideas = demoIdeas(topic).map((i, n) => ({
+      topic,
+      ...i,
+      title: [`${hero} and the Lost Star`, `The Last Slice for ${hero}`, `${hero}'s Night Shift`][n] + suffix,
+    }));
+    const fresh = ideas.filter((i) => !used.has(i.title.toLowerCase()));
+    if (fresh.length) return fresh;
+  }
+  return [];
+}

@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { isDemoMode } from "@/lib/agents/claude";
-import { listIdeas, listJobs } from "@/lib/db";
+import { autopilotPhase, startAutopilot } from "@/lib/autopilot";
+import { getAutopilot, listActivity, listIdeas, listJobs } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json({ demo: isDemoMode(), ideas: listIdeas(), jobs: listJobs() });
+  startAutopilot(); // no-op once running; covers servers started without instrumentation
+  return NextResponse.json({
+    demo: isDemoMode(),
+    ideas: listIdeas(),
+    jobs: listJobs(),
+    autopilot: { ...getAutopilot(), phase: autopilotPhase() },
+    activity: listActivity(30),
+  });
 }

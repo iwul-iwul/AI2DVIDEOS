@@ -9,7 +9,9 @@ export async function POST(req: Request) {
   const ideaId = Number(body.ideaId);
   if (!Number.isInteger(ideaId)) return NextResponse.json({ error: "ideaId is required." }, { status: 400 });
   try {
-    return NextResponse.json({ job: startProduction(ideaId) });
+    const { job, done } = startProduction(ideaId);
+    void done;
+    return NextResponse.json({ job });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Could not start." }, { status: 404 });
   }

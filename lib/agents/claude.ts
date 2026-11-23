@@ -3,8 +3,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { ACCESSORIES, ACTIONS, COLORS, MOODS, SETTINGS, TIMES, type Story } from "../types";
-import { demoIdeas, demoScript, type IdeaInput } from "./demo";
+import { ACCESSORIES, ACTIONS, COLORS, MOODS, SETTINGS, TIMES, type Idea, type Story } from "../types";
+import { demoIdeas, demoPitchesFromBrief, demoScript, type IdeaInput } from "./demo";
 
 const MODEL = "claude-opus-5-5";
 
@@ -108,4 +108,69 @@ export async function writeScript(idea: IdeaInput): Promise<Story> {
   const beats = out.beats.slice(0, 8);
   if (beats.length < 3) throw new Error("The story came back with too few beats.");
   return { ...out, characters: out.characters.slice(0, 3), beats };
+}
+
+// ---- Autopilot agents ----
+
+const BriefPitchSchema = z.object({
+  ideas: z
+    .array(
+      z.object({
+        theme: z.string().describe("The theme this story explores, a few words"),
+        title: z.string().describe("Story title, 2 to 5 words"),
+        hook: z.string().describe("Logline: one sentence, under 25 words"),
+        angle: z.string().describe("Genre and the twist or emotional payoff, one sentence"),
+      }),
+    )
+    .describe("4 to 6 pitches with varied themes and genres"),
+});
+
+/** Research Desk on autopilot: invents themes from the channel brief and pitches stories, avoiding past titles. */
+export async function pitchFromBrief(brief: string, pastTitles: string[]): Promise<IdeaInput[]> {
+  const used = new Set(pastTitles.map((t) => t.trim().toLowerCase()));
+  if (isDemoMode()) return demoPitchesFromBrief(pastTitles);
+  const out = await ask(
+    "You develop ideas for 30 to 45 second animated short stories posted as vertical videos. Stories star simple, round cartoon characters, need at most 3 characters, and land a clear emotional payoff or twist in under a minute. Keep them original and suitable for all ages. Never reuse a title or premise the channel has already made.",
+    `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nTitles already used (do not repeat these or close variations):\n${pastTitles.slice(0, 120).join("\n") || "(none yet)"}\n\nPitch 4 to 6 new stories that fit the brief.`,
+    BriefPitchSchema,
+  );
+  return out.ideas
+    .filter((i) => !used.has(i.title.trim().toLowerCase()))
+    .map((i) => ({ topic: i.theme, title: i.title, hook: i.hook, angle: i.angle }));
+}
+
+const PickSchema = z.object({
+  id: z.number().int().describe("id of the pitch to make next"),
+  reason: z.string().describe("One sentence on why this pitch is the strongest"),
+});
+
+/** Producer: picks the strongest waiting pitch. */
+export async function pickBestIdea(ideas: Idea[], brief: string): Promise<{ id: number; reason: string }> {
+  if (ideas.length === 1 || isDemoMode()) return { id: ideas[0].id, reason: "Oldest pitch in the queue." };
+  const out = await ask(
+    "You are the producer of an animated short-story channel. You pick which pitch to make next: the one most likely to hold a viewer for 40 seconds and get shared, while fitting the channel brief.",
+    `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nWaiting pitches:\n${ideas
+      .map((i) => `id ${i.id}: "${i.title}". ${i.hook} (${i.angle})`)
+      .join("\n")}`,
+    PickSchema,
+  );
+  const valid = ideas.find((i) => i.id === out.id);
+  return valid ? out : { id: ideas[0].id, reason: "The producer named a pitch that isn't waiting, so it took the oldest one." };
+}
+
+const ReviewSchema = z.object({
+  approved: z.boolean().describe("true if the story works as is"),
+  issues: z.array(z.string()).describe("Each real problem, one short sentence each. Empty if none."),
+  fixed: StorySchema.nullable().describe("A corrected full story if there were fixable issues, otherwise null"),
+  reject: z.boolean().describe("true only if the story is unfixable or unsuitable for all ages"),
+});
+
+/** QA Lab: Claude reviews the story for plot holes, pacing and suitability, and fixes it once. */
+export async function reviewStory(story: Story): Promise<{ approved: boolean; issues: string[]; fixed: Story | null; reject: boolean }> {
+  if (isDemoMode()) return { approved: true, issues: [], fixed: null, reject: false };
+  return ask(
+    "You are the story editor for an animated short-story channel (30 to 45 second vertical videos, all ages). Check the story for: plot holes, characters who act or speak without being introduced, a missing payoff, beats that don't move the story, text too long to read in a few seconds, and anything not suitable for all ages. Be practical: only flag real problems. If you can fix them, return the full corrected story in the same format, keeping what works.",
+    `Story JSON:\n${JSON.stringify(story)}`,
+    ReviewSchema,
+  );
 }

@@ -123,7 +123,13 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .thump { transform-box: fill-box; transform-origin: center; animation: pop 0.45s ease-in-out infinite; }
 .parcel-move { animation: convey 2.4s linear infinite; }
 .light-cone { transition: opacity 0.4s; }
+.clap { transform-box: fill-box; transform-origin: left bottom; animation: clap 0.8s ease-in-out infinite; }
+.tick { stroke-dasharray: 30; animation: tick 1.6s ease-in-out infinite; }
+.scan { animation: scan 1.6s ease-in-out infinite alternate; }
 
+@keyframes clap { 0%, 60%, 100% { transform: rotate(0); } 30% { transform: rotate(-22deg); } }
+@keyframes tick { from { stroke-dashoffset: 30; } 50%, to { stroke-dashoffset: 0; } }
+@keyframes scan { from { transform: translateX(-30px); } to { transform: translateX(30px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes tap { from { transform: rotate(-10deg); } to { transform: rotate(-40deg); } }
@@ -140,3 +146,25 @@ button.ghost { background: #fff; color: #1b1b2f; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* autopilot */
+.autopilot label { font-weight: 800; display: block; margin: 12px 0 6px; }
+.autopilot label.inline { display: inline; margin: 0; }
+.autopilot textarea { width: 100%; font: 600 15px var(--font-body); padding: 10px 12px; border-radius: 12px; border: 2px solid #1b1b2f; resize: vertical; background: #fff; }
+.autopilot select { font: 700 15px var(--font-body); padding: 8px 10px; border-radius: 10px; border: 2px solid #1b1b2f; background: #fff; }
+.autopilot h3 { font-family: var(--font-display); margin: 18px 0 8px; font-size: 18px; }
+.ap-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ap-status { margin: 10px 0 0; font-weight: 700; }
+.switch { display: inline-flex; align-items: center; gap: 10px; background: #dee2e6; color: #1b1b2f; padding: 6px 14px 6px 6px; border-radius: 999px; }
+.switch .knob { width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 2px solid #1b1b2f; transition: transform 0.2s; }
+.switch-on { background: var(--good); }
+.switch-on .knob { transform: translateX(4px); }
+.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.log li { font-size: 14px; line-height: 1.35; padding: 6px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--line); overflow-wrap: anywhere; }
+.log time { margin-right: 6px; }
+.log-warn { background: #fff4d6 !important; }
+.log-error { background: #ffe5ea !important; }
+.issues { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pill-qa-approved, .pill-qa-fixed { background: var(--good); color: #06332a; }
+.pill-qa-rejected { background: #b00020; color: #fff; }
+.idea-skipped { opacity: 0.6; }

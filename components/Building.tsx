@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export type RoomId = "research" | "script" | "art" | "edit" | "ship";
+export type RoomId = "producer" | "qa" | "research" | "script" | "art" | "edit" | "ship";
 
 export interface RoomInfo {
   id: RoomId;
@@ -12,6 +12,8 @@ export interface RoomInfo {
 }
 
 export const ROOMS: RoomInfo[] = [
+  { id: "producer", name: "Producer's Office", agent: "Bea", role: "Runs the autopilot and picks the next story" },
+  { id: "qa", name: "QA Lab", agent: "Vera", role: "Checks and fixes each story before it is drawn" },
   { id: "research", name: "Research Desk", agent: "Pip", role: "Pitches short story ideas" },
   { id: "script", name: "Script Room", agent: "Quill", role: "Writes the story, cast and dialogue" },
   { id: "art", name: "Art Studio", agent: "Dot", role: "Stages each scene and camera move" },
@@ -27,14 +29,18 @@ interface Box {
 }
 
 const LAYOUT: Record<RoomId, Box> = {
-  research: { x: 40, y: 170, w: 400, h: 240 },
-  script: { x: 460, y: 170, w: 400, h: 240 },
-  art: { x: 40, y: 430, w: 400, h: 240 },
-  edit: { x: 460, y: 430, w: 400, h: 240 },
-  ship: { x: 40, y: 690, w: 820, h: 240 },
+  producer: { x: 40, y: 170, w: 400, h: 240 },
+  qa: { x: 460, y: 170, w: 400, h: 240 },
+  research: { x: 40, y: 430, w: 400, h: 240 },
+  script: { x: 460, y: 430, w: 400, h: 240 },
+  art: { x: 40, y: 690, w: 400, h: 240 },
+  edit: { x: 460, y: 690, w: 400, h: 240 },
+  ship: { x: 40, y: 950, w: 820, h: 240 },
 };
 
 const WALLS: Record<RoomId, [string, string]> = {
+  producer: ["#9a3b4f", "#7d2f40"],
+  qa: ["#2f8a7a", "#246e61"],
   research: ["#2f6f8f", "#245873"],
   script: ["#8a5a9e", "#6f4782"],
   art: ["#c0704a", "#a35c3a"],
@@ -43,6 +49,8 @@ const WALLS: Record<RoomId, [string, string]> = {
 };
 
 const LOOKS: Record<RoomId, { skin: string; hair: string; shirt: string }> = {
+  producer: { skin: "#a86b4c", hair: "#2b1a12", shirt: "#f4f1de" },
+  qa: { skin: "#f6d1b5", hair: "#c9a227", shirt: "#8338ec" },
   research: { skin: "#f2c9a0", hair: "#3b2a20", shirt: "#ffd166" },
   script: { skin: "#8d5a3b", hair: "#1d1d1d", shirt: "#ef476f" },
   art: { skin: "#ffdbb8", hair: "#e85d75", shirt: "#06d6a0" },
@@ -109,6 +117,63 @@ const Monitor: React.FC<{ x: number; y: number; w?: number; h?: number; children
 function RoomArt({ id, b, working }: { id: RoomId; b: Box; working: boolean }) {
   const floor = b.y + b.h - 30;
   switch (id) {
+    case "producer":
+      return (
+        <>
+          {/* schedule board */}
+          <rect x={b.x + 24} y={b.y + 56} width="150" height="110" rx="6" fill="#f8f9fa" stroke="#1b1b2f" strokeWidth="3" />
+          {[0, 1, 2, 3].map((i) => (
+            <g key={i}>
+              <rect x={b.x + 36} y={b.y + 68 + i * 24} width="14" height="14" rx="3" fill={i < 2 ? "#06d6a0" : "#dee2e6"} stroke="#1b1b2f" strokeWidth="2" />
+              <rect x={b.x + 58} y={b.y + 72 + i * 24} width={80 - i * 10} height="6" rx="3" fill="#adb5bd" />
+            </g>
+          ))}
+          {/* clapperboard */}
+          <g transform={`translate(${b.x + 330} ${b.y + 70})`}>
+            <rect width="56" height="40" fill="#2b2d42" stroke="#1b1b2f" strokeWidth="3" />
+            <g className={working ? "clap" : undefined}>
+              <rect y="-14" width="56" height="12" fill="#f8f9fa" stroke="#1b1b2f" strokeWidth="3" />
+              <path d="M10 -14 l8 12 M26 -14 l8 12 M42 -14 l8 12" stroke="#1b1b2f" strokeWidth="3" />
+            </g>
+          </g>
+          <Desk x={b.x + 200} y={floor - 60} w={170} />
+          {/* big chair */}
+          <rect x={b.x + 230} y={floor - 120} width="50" height="64" rx="12" fill="#ef476f" stroke="#1b1b2f" strokeWidth="3" />
+          <Monitor x={b.x + 300} y={floor - 118} w={60} h={40}>
+            <circle cx={b.x + 330} cy={floor - 98} r="10" fill="#06d6a0" className={working ? "thump" : undefined} />
+          </Monitor>
+          <Worker id={id} x={b.x + 190} y={floor} working={working} />
+        </>
+      );
+    case "qa":
+      return (
+        <>
+          {/* checklist */}
+          <rect x={b.x + 30} y={b.y + 56} width="120" height="140" rx="8" fill="#fff8e6" stroke="#1b1b2f" strokeWidth="3" />
+          {[0, 1, 2, 3].map((i) => (
+            <g key={i}>
+              <path
+                className={working ? "tick" : undefined}
+                style={{ animationDelay: `${i * 0.3}s` }}
+                d={`M${b.x + 42} ${b.y + 82 + i * 28} l6 6 l10 -12`}
+                stroke="#06d6a0"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <rect x={b.x + 66} y={b.y + 80 + i * 28} width="70" height="6" rx="3" fill="#adb5bd" />
+            </g>
+          ))}
+          <Desk x={b.x + 200} y={floor - 60} w={170} />
+          {/* magnifier */}
+          <g className={working ? "scan" : undefined}>
+            <circle cx={b.x + 290} cy={floor - 100} r="22" fill="#bde0fe" fillOpacity="0.6" stroke="#1b1b2f" strokeWidth="5" />
+            <path d={`M${b.x + 306} ${floor - 84} l20 20`} stroke="#1b1b2f" strokeWidth="8" strokeLinecap="round" />
+          </g>
+          <rect x={b.x + 230} y={floor - 72} width="44" height="10" fill="#fff" stroke="#1b1b2f" strokeWidth="2" />
+          <Worker id={id} x={b.x + 180} y={floor} working={working} />
+        </>
+      );
     case "research":
       return (
         <>
@@ -251,7 +316,7 @@ export const Building: React.FC<{
   selected: RoomId;
   onSelect: (id: RoomId) => void;
 }> = ({ active, selected, onSelect }) => (
-  <svg className="building" viewBox="0 0 900 990" role="group" aria-label="Reelhouse studio building">
+  <svg className="building" viewBox="0 0 900 1250" role="group" aria-label="Reelhouse studio building">
     {/* sky details */}
     <circle cx="820" cy="60" r="26" fill="var(--sun)" />
     {/* roof and sign */}
@@ -269,7 +334,7 @@ export const Building: React.FC<{
       REELHOUSE
     </text>
     {/* outer wall */}
-    <rect x="20" y="160" width="860" height="790" fill="#5c3d3a" stroke="#1b1b2f" strokeWidth="4" />
+    <rect x="20" y="160" width="860" height="1050" fill="#5c3d3a" stroke="#1b1b2f" strokeWidth="4" />
     {/* rooms */}
     {ROOMS.map((room) => {
       const b = LAYOUT[room.id];
@@ -328,7 +393,7 @@ export const Building: React.FC<{
       );
     })}
     {/* sidewalk */}
-    <rect x="0" y="950" width="900" height="40" fill="#6c757d" />
-    <rect x="0" y="950" width="900" height="6" fill="#495057" />
+    <rect x="0" y="1210" width="900" height="40" fill="#6c757d" />
+    <rect x="0" y="1210" width="900" height="6" fill="#495057" />
   </svg>
 );

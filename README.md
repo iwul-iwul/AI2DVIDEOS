@@ -6,13 +6,26 @@ A 2D studio building where each room is an AI agent that does one real step of m
 
 | Room | Agent | What it does |
 | --- | --- | --- |
+| Producer's Office | Bea | Runs the autopilot and picks the strongest waiting pitch |
+| QA Lab | Vera | Checks each story before it is drawn: rule checks always, plus a Claude edit pass in live mode. Fixes what it can, rejects the rest |
 | Research Desk | Pip | Turns a theme into 3 to 5 story pitches (title, logline, genre and twist) and adds them to the queue |
 | Script Room | Quill | Writes the story: up to 3 characters (name, color, accessory) and 5 to 8 beats, each with a setting, time of day, narration, who is on screen with their mood and action, and an optional line of dialogue |
 | Art Studio | Dot | Stages each beat: timing from reading speed, camera move, and a valid cast |
 | Edit Bay | Splice | Animates the scenes with Remotion and renders the MP4 |
-| Shipping Dock | Hatch | Serves the finished video for download, with caption and hashtags |
+| Shipping Dock | Hatch | Saves each finished story to `output/<date>_<id>_<title>/` as `video.mp4`, `caption.txt` and `story.json`, and serves it for download |
 
 ![Frames from a rendered video](docs/sample-frames.png)
+
+## Autopilot
+
+Open the Producer's Office, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick how many stories per day, and switch autopilot on. From then on, each run:
+
+1. Refills the queue from the brief when fewer than 3 pitches are waiting, skipping titles the studio has already used.
+2. Has the Producer pick the best pitch.
+3. Writes, checks, stages, renders and exports the story.
+4. Retries a failed story once right away. A story that fails twice is marked Skipped.
+
+Runs are spread evenly across the day. Every step is logged in the Producer's Office. The scheduler starts with the server, so autopilot keeps working with no browser open, but only while `npm start` (or `npm run dev`) is running. Set `REELHOUSE_OUTPUT_DIR` to save finished stories somewhere else.
 
 ## Run it
 
