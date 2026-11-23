@@ -97,14 +97,18 @@ const BriefPitchSchema = z.object({
 });
 
 /** Research Desk on autopilot: invents themes from the channel brief and pitches stories, avoiding past titles. */
-export async function pitchFromBrief(brief: string, pastTitles: string[]): Promise<IdeaInput[]> {
+export async function pitchFromBrief(brief: string, pastTitles: string[], trends: string[] = []): Promise<IdeaInput[]> {
   const used = new Set(pastTitles.map((t) => t.trim().toLowerCase()));
   const engine = await currentEngine();
-  if (engine === "demo") return demoPitchesFromBrief(pastTitles);
+  if (engine === "demo") return demoPitchesFromBrief(pastTitles, trends);
   const out = await ask(
     engine,
     "You develop ideas for 30 to 45 second animated short stories posted as vertical videos. Stories star simple, round cartoon characters, need at most 3 characters, and land a clear emotional payoff or twist in under a minute. Keep them original and suitable for all ages. Never reuse a title or premise the channel has already made.",
-    `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nTitles already used (do not repeat these or close variations):\n${pastTitles.slice(0, 120).join("\n") || "(none yet)"}\n\nPitch 4 to 6 new stories that fit the brief.`,
+    `Channel brief: ${brief || "Heartwarming and funny short stories for all ages."}\n\nTitles already used (do not repeat these or close variations):\n${pastTitles.slice(0, 120).join("\n") || "(none yet)"}${
+      trends.length
+        ? `\n\nTrending right now, found by the channel's trend scout (use them as inspiration where they fit the brief; make at least half the pitches ride one of these trends, in an original way):\n${trends.map((t) => `- ${t}`).join("\n")}`
+        : ""
+    }\n\nPitch 4 to 6 new stories that fit the brief.`,
     BriefPitchSchema,
   );
   return out.ideas

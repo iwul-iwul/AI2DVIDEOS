@@ -3,6 +3,7 @@
 // pitch, and send it down the production line.
 
 import { pickBestIdea, pitchFromBrief } from "./agents/brain";
+import { freshTrends } from "./trends";
 import { addIdeas, getAutopilot, listJobs, logActivity, pastTitles, queuedIdeas, saveAutopilot } from "./db";
 import { startProduction } from "./pipeline";
 import type { AutopilotPhase, AutopilotSettings } from "./types";
@@ -82,8 +83,10 @@ async function tick(): Promise<void> {
 async function runOnce(settings: AutopilotSettings): Promise<void> {
   // 1. Research Desk refills the queue.
   if (queuedIdeas().length < MIN_QUEUE) {
+    rt.phase = "scouting";
+    const report = await freshTrends();
     rt.phase = "researching";
-    const pitches = await pitchFromBrief(settings.brief, pastTitles());
+    const pitches = await pitchFromBrief(settings.brief, pastTitles(), report?.themes.map((t) => t.theme) ?? []);
     if (pitches.length) {
       for (const p of pitches) addIdeas(p.topic, [p]);
       logActivity("research", `Pitched ${pitches.length} new stories: ${pitches.map((p) => `"${p.title}"`).join(", ")}.`);

@@ -99,15 +99,17 @@ export function demoScript(idea: IdeaInput): Story {
 const DEMO_HEROES = ["Owl", "Snail", "Dragon", "Robot", "Cloud", "Cactus", "Penguin", "Comet", "Fox", "Teapot"];
 
 /** Demo stand-in for the Research Desk on autopilot: rotates through heroes so titles don't repeat. */
-export function demoPitchesFromBrief(pastTitles: string[]): IdeaInput[] {
+export function demoPitchesFromBrief(pastTitles: string[], trends: string[] = []): IdeaInput[] {
   const used = new Set(pastTitles.map((t) => t.toLowerCase()));
   for (let round = 0; round < DEMO_HEROES.length * 3; round++) {
     const hero = DEMO_HEROES[(pastTitles.length + round) % DEMO_HEROES.length];
     const suffix = round >= DEMO_HEROES.length ? ` ${Math.floor(round / DEMO_HEROES.length) + 1}` : "";
-    const topic = `a curious ${hero.toLowerCase()}`;
-    const ideas = demoIdeas(topic).map((i, n) => ({
-      topic,
+    // When the scout found trends, tag the pitches with one (templates can't rewrite the story around it).
+    const topic = trends[round % Math.max(1, trends.length)] ?? `a curious ${hero.toLowerCase()}`;
+    const ideas = demoIdeas(`a curious ${hero.toLowerCase()}`).map((i, n) => ({
       ...i,
+      topic,
+      angle: trends.length ? `${i.angle} Inspired by the trend: ${topic}.` : i.angle,
       title: [`${hero} and the Lost Star`, `The Last Slice for ${hero}`, `${hero}'s Night Shift`][n] + suffix,
     }));
     const fresh = ideas.filter((i) => !used.has(i.title.toLowerCase()));

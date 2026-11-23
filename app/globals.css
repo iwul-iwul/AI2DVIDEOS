@@ -126,11 +126,14 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .clap { transform-box: fill-box; transform-origin: left bottom; animation: clap 0.8s ease-in-out infinite; }
 .tick { stroke-dasharray: 30; animation: tick 1.6s ease-in-out infinite; }
 .sound-wave { animation: dot 0.9s infinite; }
+.trend-line { stroke-dasharray: 90; animation: tick 1.8s ease-in-out infinite; }
+.scope { animation: sweep 2.4s ease-in-out infinite alternate; }
 .scan { animation: scan 1.6s ease-in-out infinite alternate; }
 
 @keyframes clap { 0%, 60%, 100% { transform: rotate(0); } 30% { transform: rotate(-22deg); } }
-@keyframes tick { from { stroke-dashoffset: 30; } 50%, to { stroke-dashoffset: 0; } }
+@keyframes tick { from { stroke-dashoffset: 90; } 50%, to { stroke-dashoffset: 0; } }
 @keyframes scan { from { transform: translateX(-30px); } to { transform: translateX(30px); } }
+@keyframes sweep { from { transform: rotate(-8deg); } to { transform: rotate(10deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes tap { from { transform: rotate(-10deg); } to { transform: rotate(-40deg); } }
@@ -175,3 +178,5 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .dot-ok, .dot-off { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px solid #1b1b2f; flex: none; }
 .dot-ok { background: var(--good); }
 .dot-off { background: #ced4da; }
+.trend-link { color: #3a5a99; text-decoration: none; overflow-wrap: anywhere; }
+.trend-link:hover { text-decoration: underline; }

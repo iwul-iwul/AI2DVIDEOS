@@ -132,9 +132,9 @@ export interface AutopilotSettings {
   nextRunAt: string | null;
 }
 
-export type AutopilotPhase = "idle" | "researching" | "picking" | "producing";
+export type AutopilotPhase = "idle" | "scouting" | "researching" | "picking" | "producing";
 
-export type Agent = "autopilot" | "research" | "producer" | "script" | "qa" | "voice" | "art" | "edit" | "ship";
+export type Agent = "autopilot" | "scout" | "research" | "producer" | "script" | "qa" | "voice" | "art" | "edit" | "ship";
 
 export interface Activity {
   id: number;
@@ -142,4 +142,26 @@ export interface Activity {
   agent: Agent;
   message: string;
   level: "info" | "warn" | "error";
+}
+
+/** A raw post or search trend the Trend Scout found. */
+export interface TrendItem {
+  source: string;
+  title: string;
+  url: string;
+  score: number;
+}
+
+export interface TrendTheme {
+  theme: string;
+  why: string;
+  examples: TrendItem[];
+}
+
+export interface TrendReport {
+  fetchedAt: string;
+  themes: TrendTheme[];
+  itemCount: number;
+  sourcesOk: string[];
+  errors: string[];
 }

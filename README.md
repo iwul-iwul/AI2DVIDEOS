@@ -6,6 +6,7 @@ A 2D studio building where each room is an AI agent that does one real step of m
 
 | Room | Agent | What it does |
 | --- | --- | --- |
+| Trend Lookout (rooftop) | Juno | Checks what's trending in short stories and 2D AI animation (top posts this week in r/aivideo, r/animation, r/WritingPrompts and r/shortstories, plus Google Trends) and turns them into story themes |
 | Producer's Office | Bea | Runs the autopilot and picks the strongest waiting pitch |
 | QA Lab | Vera | Checks each story before it is drawn: rule checks always, plus a Claude edit pass in live mode. Fixes what it can, rejects the rest |
 | Research Desk | Pip | Turns a theme into 3 to 5 story pitches (title, logline, genre and twist) and adds them to the queue |
@@ -17,11 +18,13 @@ A 2D studio building where each room is an AI agent that does one real step of m
 
 ![Frames from a rendered video](docs/sample-frames.png)
 
+![The Trend Lookout](docs/trend-lookout.png)
+
 ## Autopilot
 
 Open the Producer's Office, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick how many stories per day, and switch autopilot on. From then on, each run:
 
-1. Refills the queue from the brief when fewer than 3 pitches are waiting, skipping titles the studio has already used.
+1. Refills the queue when fewer than 3 pitches are waiting. The Trend Lookout checks its sources first (at most every 12 hours), and the Research Desk pitches from the brief plus the current trends, skipping titles the studio has already used. If no trend source can be reached, it uses the last report, or the brief alone.
 2. Has the Producer pick the best pitch.
 3. Writes, checks, stages, renders and exports the story.
 4. Retries a failed story once right away. A story that fails twice is marked Skipped.
@@ -66,6 +69,7 @@ A note on licenses: Ollama, Qwen 2.5 and Piper are open source. The video render
 - `components/Studio.tsx` room panels and the idea queue; polls `/api/state`.
 - `lib/engine.ts` picks the story writer (Ollama, Claude or demo) and asks it for structured JSON.
 - `lib/agents/` the writing agents (pitches, producer pick, story, QA editor), rule-based QA, demo templates, and Art (deterministic scene timing).
+- `lib/trends.ts` the Trend Lookout: free public sources (no accounts or keys), summarized into themes by the story writer.
 - `lib/voice.ts` the Sound Booth: Piper voiceover.
 - `lib/pipeline.ts` runs one job at a time: script, art, edit, ship.
 - `remotion/` the story video: 8 backgrounds (forest, city, bedroom, space, beach, castle, cafe, classroom) in day, sunset and night, characters with 7 expressions and 5 actions, speech bubbles, narration, title and end cards.

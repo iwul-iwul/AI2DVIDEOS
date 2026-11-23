@@ -65,6 +65,8 @@ The first video takes a little longer while Reelhouse downloads a small browser 
 - **By hand:** click the **Research Desk**, type a theme, press **Pitch stories**, then **Produce** one.
 - **On autopilot:** click the **Producer's Office**, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick stories per day, and switch **Autopilot** on.
 
+- **Trends:** click the **Trend Lookout** on the roof and press **Check trends now** to see what's popular this week. Autopilot uses these trends in its pitches on its own.
+
 Finished videos appear in the `output` folder inside Reelhouse, each with a `caption.txt` ready to paste when you post.
 
 Reelhouse only works while the terminal from step 5 stays open. To stop it, press `Ctrl + C` in that terminal. To start it again later, open a terminal in the folder (step 3) and type `npm start`.
@@ -95,5 +97,7 @@ Claude writes stronger stories but costs a few cents per story. Get a key at htt
 | `PIPER_CHARACTER_VOICE` | Multi-speaker voice for characters | `en_US-libritts_r-medium` |
 | `REELHOUSE_VOICE` | `0` turns voiceover off | on |
 | `REELHOUSE_OUTPUT_DIR` | Where finished stories are saved | `./output` |
+| `REELHOUSE_SUBREDDITS` | Reddit communities the Trend Lookout reads, separated by commas | `aivideo,animation,WritingPrompts,shortstories` |
+| `REELHOUSE_TRENDS_RSS` | Google Trends feed (set it empty to skip Google Trends) | US daily trends |
 
 If you change a voice, run `npm run setup:voice` again to download it.

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type { Activity, AutopilotPhase, AutopilotSettings, CharacterColor, Idea, Job } from "@/lib/types";
+import type { Activity, AutopilotPhase, AutopilotSettings, CharacterColor, Idea, Job, TrendReport } from "@/lib/types";
 import { Building, ROOMS, type RoomId } from "./Building";
 
 interface State {
@@ -18,6 +18,7 @@ interface State {
   jobs: Job[];
   autopilot: AutopilotSettings & { phase: AutopilotPhase };
   activity: Activity[];
+  trends: TrendReport | null;
 }
 
 const STAGE_ROOM: Partial<Record<Job["stage"], RoomId>> = {
@@ -49,6 +50,7 @@ export default function Studio() {
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [focusJobId, setFocusJobId] = useState<number | null>(null);
+  const [scouting, setScouting] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -71,7 +73,9 @@ export default function Studio() {
   const focusJob = jobs.find((j) => j.id === focusJobId) ?? activeJob ?? jobs[0] ?? null;
   const phase = state?.autopilot.phase ?? "idle";
   const activeRoom: RoomId | null =
-    researching || phase === "researching"
+    scouting || phase === "scouting"
+      ? "scout"
+      : researching || phase === "researching"
       ? "research"
       : activeJob
         ? (STAGE_ROOM[activeJob.stage] ?? null)
@@ -184,6 +188,56 @@ export default function Studio() {
 
             {selected === "producer" && state && <AutopilotPanel state={state} onChange={refresh} />}
 
+            {selected === "scout" && state && (
+              <div className="job">
+                <div className="row">
+                  <button
+                    disabled={scouting || phase === "scouting"}
+                    onClick={async () => {
+                      setScouting(true);
+                      try {
+                        await fetch("/api/trends", { method: "POST" });
+                        await refresh();
+                      } finally {
+                        setScouting(false);
+                      }
+                    }}
+                  >
+                    {scouting || phase === "scouting" ? "Scouting…" : "Check trends now"}
+                  </button>
+                  <span className="muted small">
+                    {state.trends ? `Last checked ${new Date(state.trends.fetchedAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}` : "Not checked yet"}
+                  </span>
+                </div>
+                <p className="muted small">
+                  Juno reads this week&apos;s top posts in r/aivideo, r/animation, r/WritingPrompts and r/shortstories, plus Google Trends. On autopilot Juno checks every 12 hours, and the Research Desk uses these themes in its pitches.
+                </p>
+                {state.trends ? (
+                  <>
+                    <ol className="shots">
+                      {state.trends.themes.map((t, i) => (
+                        <li key={i}>
+                          <strong>{t.theme}</strong>
+                          <span className="muted small">{t.why}</span>
+                          {t.examples.slice(0, 2).map((e, k) => (
+                            <a key={k} className="small trend-link" href={e.url} target="_blank" rel="noreferrer">
+                              {e.source}: {e.title}
+                            </a>
+                          ))}
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="muted small">
+                      {state.trends.itemCount} posts from {state.trends.sourcesOk.join(", ") || "no sources"}.
+                      {state.trends.errors.length > 0 && ` Couldn't reach: ${state.trends.errors.map((e) => e.split(":")[0]).join(", ")}.`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="muted">No trend report yet. Press Check trends now, or switch on autopilot.</p>
+                )}
+              </div>
+            )}
+
             {selected === "voice" && state && (
               <div className="job">
                 <p>
@@ -227,7 +281,7 @@ export default function Studio() {
               </JobHeader>
             )}
 
-            {selected !== "research" && selected !== "producer" && selected !== "voice" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
+            {selected !== "research" && selected !== "producer" && selected !== "voice" && selected !== "scout" && !focusJob && <p className="muted">Nothing here yet. Produce an idea from the queue to get this room working.</p>}
 
             {selected === "script" && focusJob && (
               <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
@@ -376,6 +430,7 @@ function fmtTime(iso: string | null): string {
 
 const AGENT_NAMES: Record<Activity["agent"], string> = {
   autopilot: "Autopilot",
+  scout: "Juno",
   research: "Pip",
   producer: "Bea",
   script: "Quill",
@@ -404,7 +459,9 @@ function AutopilotPanel({ state, onChange }: { state: State; onChange: () => Pro
   }
 
   const status =
-    ap.phase === "researching"
+    ap.phase === "scouting"
+      ? "Checking what's trending…"
+      : ap.phase === "researching"
       ? "Pitching new stories…"
       : ap.phase === "picking"
         ? "Picking the next story…"

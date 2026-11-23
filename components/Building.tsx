@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export type RoomId = "producer" | "qa" | "research" | "script" | "art" | "edit" | "voice" | "ship";
+export type RoomId = "scout" | "producer" | "qa" | "research" | "script" | "art" | "edit" | "voice" | "ship";
 
 export interface RoomInfo {
   id: RoomId;
@@ -12,6 +12,7 @@ export interface RoomInfo {
 }
 
 export const ROOMS: RoomInfo[] = [
+  { id: "scout", name: "Trend Lookout", agent: "Juno", role: "Scouts what's trending in short stories and 2D AI animation" },
   { id: "producer", name: "Producer's Office", agent: "Bea", role: "Runs the autopilot and picks the next story" },
   { id: "qa", name: "QA Lab", agent: "Vera", role: "Checks and fixes each story before it is drawn" },
   { id: "research", name: "Research Desk", agent: "Pip", role: "Pitches short story ideas" },
@@ -30,17 +31,19 @@ interface Box {
 }
 
 const LAYOUT: Record<RoomId, Box> = {
-  producer: { x: 40, y: 170, w: 400, h: 240 },
-  qa: { x: 460, y: 170, w: 400, h: 240 },
-  research: { x: 40, y: 430, w: 400, h: 240 },
-  script: { x: 460, y: 430, w: 400, h: 240 },
-  art: { x: 40, y: 690, w: 400, h: 240 },
-  edit: { x: 460, y: 690, w: 400, h: 240 },
-  voice: { x: 40, y: 950, w: 400, h: 240 },
-  ship: { x: 460, y: 950, w: 400, h: 240 },
+  scout: { x: 620, y: 50, w: 240, h: 200 },
+  producer: { x: 40, y: 320, w: 400, h: 240 },
+  qa: { x: 460, y: 320, w: 400, h: 240 },
+  research: { x: 40, y: 580, w: 400, h: 240 },
+  script: { x: 460, y: 580, w: 400, h: 240 },
+  art: { x: 40, y: 840, w: 400, h: 240 },
+  edit: { x: 460, y: 840, w: 400, h: 240 },
+  voice: { x: 40, y: 1100, w: 400, h: 240 },
+  ship: { x: 460, y: 1100, w: 400, h: 240 },
 };
 
 const WALLS: Record<RoomId, [string, string]> = {
+  scout: ["#264653", "#1d3640"],
   voice: ["#3a3a5c", "#2c2c48"],
   producer: ["#9a3b4f", "#7d2f40"],
   qa: ["#2f8a7a", "#246e61"],
@@ -52,6 +55,7 @@ const WALLS: Record<RoomId, [string, string]> = {
 };
 
 const LOOKS: Record<RoomId, { skin: string; hair: string; shirt: string }> = {
+  scout: { skin: "#d9a066", hair: "#1d1d1d", shirt: "#2a9d8f" },
   voice: { skin: "#e8b48a", hair: "#ef476f", shirt: "#ffd166" },
   producer: { skin: "#a86b4c", hair: "#2b1a12", shirt: "#f4f1de" },
   qa: { skin: "#f6d1b5", hair: "#c9a227", shirt: "#8338ec" },
@@ -121,6 +125,33 @@ const Monitor: React.FC<{ x: number; y: number; w?: number; h?: number; children
 function RoomArt({ id, b, working }: { id: RoomId; b: Box; working: boolean }) {
   const floor = b.y + b.h - 30;
   switch (id) {
+    case "scout":
+      return (
+        <>
+          {/* window to the night sky */}
+          <rect x={b.x + 16} y={b.y + 50} width="110" height="80" rx="8" fill="#0b1d3a" stroke="#1b1b2f" strokeWidth="3" />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <circle key={i} cx={b.x + 28 + ((i * 37) % 90)} cy={b.y + 62 + ((i * 23) % 56)} r="2.5" fill="#fff" />
+          ))}
+          {/* trend chart */}
+          <rect x={b.x + 140} y={b.y + 50} width="86" height="62" rx="6" fill="#f8f9fa" stroke="#1b1b2f" strokeWidth="3" />
+          <path
+            className={working ? "trend-line" : undefined}
+            d={`M${b.x + 150} ${b.y + 100} l18 -12 l14 6 l18 -22 l16 -10`}
+            stroke="#ef476f"
+            strokeWidth="4"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {/* telescope */}
+          <path d={`M${b.x + 170} ${floor} l14 -46 l14 46 M${b.x + 184} ${floor - 46} v46`} stroke="#1b1b2f" strokeWidth="4" fill="none" />
+          <g className={working ? "scope" : undefined} style={{ transformOrigin: `${b.x + 184}px ${floor - 50}px` }}>
+            <rect x={b.x + 150} y={floor - 66} width="74" height="18" rx="6" fill="#e9c46a" stroke="#1b1b2f" strokeWidth="3" transform={`rotate(-28 ${b.x + 184} ${floor - 56})`} />
+          </g>
+          <Worker id={id} x={b.x + 80} y={floor} working={working} />
+        </>
+      );
     case "producer":
       return (
         <>
@@ -352,13 +383,13 @@ export const Building: React.FC<{
   selected: RoomId;
   onSelect: (id: RoomId) => void;
 }> = ({ active, selected, onSelect }) => (
-  <svg className="building" viewBox="0 0 900 1250" role="group" aria-label="Reelhouse studio building">
+  <svg className="building" viewBox="0 0 900 1400" role="group" aria-label="Reelhouse studio building">
     {/* sky details */}
-    <circle cx="820" cy="60" r="26" fill="var(--sun)" />
+    <circle cx="110" cy="110" r="30" fill="var(--sun)" />
     {/* roof and sign */}
-    <path d="M20 160 L60 110 H840 L880 160 Z" fill="#3d2c2e" stroke="#1b1b2f" strokeWidth="4" />
-    <rect x="300" y="40" width="300" height="70" rx="14" fill="#1b1b2f" />
-    <g transform="translate(345 75)">
+    <path d="M20 310 L60 260 H840 L880 310 Z" fill="#3d2c2e" stroke="#1b1b2f" strokeWidth="4" />
+    <rect x="300" y="190" width="300" height="70" rx="14" fill="#1b1b2f" />
+    <g transform="translate(345 225)">
       <g className="reel">
         <circle r="24" fill="#ffd166" stroke="#fff" strokeWidth="3" />
         {[0, 72, 144, 216, 288].map((a) => (
@@ -366,11 +397,13 @@ export const Building: React.FC<{
         ))}
       </g>
     </g>
-    <text x="380" y="88" fill="#ffd166" fontSize="34" fontWeight="900" fontFamily="var(--font-display)" letterSpacing="2">
+    <text x="380" y="238" fill="#ffd166" fontSize="34" fontWeight="900" fontFamily="var(--font-display)" letterSpacing="2">
       REELHOUSE
     </text>
+    {/* rooftop lookout base */}
+    <rect x="612" y="246" width="256" height="18" fill="#3d2c2e" stroke="#1b1b2f" strokeWidth="4" />
     {/* outer wall */}
-    <rect x="20" y="160" width="860" height="1050" fill="#5c3d3a" stroke="#1b1b2f" strokeWidth="4" />
+    <rect x="20" y="310" width="860" height="1050" fill="#5c3d3a" stroke="#1b1b2f" strokeWidth="4" />
     {/* rooms */}
     {ROOMS.map((room) => {
       const b = LAYOUT[room.id];
@@ -429,7 +462,7 @@ export const Building: React.FC<{
       );
     })}
     {/* sidewalk */}
-    <rect x="0" y="1210" width="900" height="40" fill="#6c757d" />
-    <rect x="0" y="1210" width="900" height="6" fill="#495057" />
+    <rect x="0" y="1360" width="900" height="40" fill="#6c757d" />
+    <rect x="0" y="1360" width="900" height="6" fill="#495057" />
   </svg>
 );
