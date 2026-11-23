@@ -259,8 +259,84 @@ function Classroom({ time }: { time: TimeOfDay }) {
   );
 }
 
+
+/** A grand hall of white columns and gold, for ceremonies and big reveals. */
+function Palace({ time }: { time: TimeOfDay }) {
+  const gold = "#f2c14e";
+  const column = (x: number, k: number) => (
+    <g key={k}>
+      <rect x={x - 20} y="250" width="150" height="50" fill="#fffdf5" stroke={INK} strokeWidth={5} />
+      <rect x={x} y="300" width="110" height={G - 420} fill="#fbf7ea" stroke={INK} strokeWidth={5} />
+      {[22, 48, 74].map((dx) => (
+        <path key={dx} d={`M${x + dx + 6} 310 V${G - 130}`} stroke="#e7dfc6" strokeWidth={8} />
+      ))}
+      <rect x={x - 20} y={G - 120} width="150" height="50" fill="#fffdf5" stroke={INK} strokeWidth={5} />
+      <rect x={x - 6} y="290" width="122" height="14" fill={gold} />
+    </g>
+  );
+  return (
+    <>
+      <Sky time={time} id="palace" />
+      <rect width={W} height="250" fill="#fbf7ea" stroke={INK} strokeWidth={5} />
+      <path d="M0 250 L540 90 L1080 250Z" fill="#fffdf5" stroke={INK} strokeWidth={5} />
+      <rect y="236" width={W} height="16" fill={gold} />
+      {/* back wall and the golden ring */}
+      <rect x="230" y="300" width="620" height={G - 370} fill="#f6efd9" />
+      <circle cx="540" cy="620" r="170" fill="none" stroke={gold} strokeWidth={26} />
+      <circle cx="540" cy="620" r="120" fill="none" stroke={gold} strokeWidth={8} opacity={0.7} />
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i / 12) * Math.PI * 2;
+        return <path key={i} d={`M${540 + Math.cos(a) * 200} ${620 + Math.sin(a) * 200} L${540 + Math.cos(a) * 250} ${620 + Math.sin(a) * 250}`} stroke={gold} strokeWidth={12} strokeLinecap="round" />;
+      })}
+      {column(40, 0)}
+      {column(930, 1)}
+      {column(250, 2)}
+      {column(720, 3)}
+      {/* steps */}
+      {[0, 1, 2].map((i) => (
+        <rect key={i} x={-20 + i * 60} y={G - 70 + i * 24} width={W + 40 - i * 120} height="30" fill="#fffdf5" stroke={INK} strokeWidth={4} />
+      ))}
+      <rect y={G} width={W} height={H - G} fill="#efe6cc" />
+      <ellipse cx="540" cy={G + 120} rx="420" ry="80" fill={gold} opacity={0.55} />
+      <ellipse cx="540" cy={G + 120} rx="300" ry="52" fill="none" stroke="#fffdf5" strokeWidth={8} />
+      <Tint time={time} />
+    </>
+  );
+}
+
+/** A stadium with a crowd, for contests, trials and showdowns. */
+function Arena({ time }: { time: TimeOfDay }) {
+  const crowd = ["#ef476f", "#ffd166", "#06d6a0", "#118ab2", "#f78c6b", "#9b5de5"];
+  return (
+    <>
+      <Sky time={time} id="arena" />
+      {[0, 1, 2, 3].map((row) => (
+        <g key={row}>
+          <rect x="-20" y={760 + row * 140} width="1120" height="140" fill={row % 2 ? "#5c677d" : "#7d8597"} stroke={INK} strokeWidth={5} />
+          {Array.from({ length: 14 }, (_, i) => (
+            <g key={i}>
+              <circle cx={i * 80 + (row % 2) * 40 + 20} cy={790 + row * 140} r="26" fill={crowd[(i + row * 3) % crowd.length]} stroke={INK} strokeWidth={4} />
+              <circle cx={i * 80 + (row % 2) * 40 + 20} cy={760 + row * 140} r="20" fill="#e0b08b" stroke={INK} strokeWidth={4} />
+            </g>
+          ))}
+        </g>
+      ))}
+      <rect x="-20" y="1320" width="1120" height="40" fill="#ef476f" stroke={INK} strokeWidth={5} />
+      {[120, 960].map((x) => (
+        <g key={x}>
+          <rect x={x - 12} y="420" width="24" height="340" fill="#adb5bd" stroke={INK} strokeWidth={4} />
+          <rect x={x - 70} y="360" width="140" height="70" rx="10" fill="#fff9db" stroke={INK} strokeWidth={5} />
+        </g>
+      ))}
+      <rect y="1360" width={W} height={H - 1360} fill="#e9c46a" />
+      <ellipse cx="540" cy={G + 60} rx="460" ry="120" fill="none" stroke="#fff" strokeWidth={10} opacity={0.8} />
+      <Tint time={time} />
+    </>
+  );
+}
+
 export const Background: React.FC<{ setting: Setting; time: TimeOfDay }> = ({ setting, time }) => {
-  const C = { forest: Forest, city: City, bedroom: Bedroom, space: Space, beach: Beach, castle: Castle, cafe: Cafe, classroom: Classroom }[setting];
+  const C = { forest: Forest, city: City, bedroom: Bedroom, space: Space, beach: Beach, castle: Castle, cafe: Cafe, classroom: Classroom, palace: Palace, arena: Arena }[setting];
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ position: "absolute", inset: 0 }}>
       <C time={time} />

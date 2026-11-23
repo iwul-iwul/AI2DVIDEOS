@@ -1,9 +1,10 @@
 // QA Lab: rule-based checks that run on every story before it is rendered.
 // Claude's review (in claude.ts) runs after these in live mode.
 
+import { MAX_BEATS } from "../style";
 import type { Story } from "../types";
 
-export const LIMITS = { narration: 110, line: 80, title: 48, minBeats: 3, maxBeats: 8 };
+export const BASE_LIMITS = { narration: 110, line: 80, title: 48, minBeats: 3 };
 
 function trimTo(text: string, max: number): string {
   if (text.length <= max) return text;
@@ -20,6 +21,8 @@ export function checkStory(input: Story): { story: Story; fixes: string[]; block
   const fixes: string[] = [];
   const blockers: string[] = [];
   const n = story.characters.length;
+  const style = story.style ?? "cozy";
+  const LIMITS = { ...BASE_LIMITS, maxBeats: MAX_BEATS[style], narration: style === "hook" ? 90 : BASE_LIMITS.narration };
 
   if (n === 0) blockers.push("The story has no characters.");
   if (story.characters.length > 3) {

@@ -15,6 +15,7 @@ interface State {
   };
   voice: { enabled: boolean; piper: boolean; narrator: boolean; characters: boolean; note: string | null };
   music: { enabled: boolean; libraryTracks: number };
+  style: "hook" | "cozy";
   ideas: Idea[];
   jobs: Job[];
   autopilot: AutopilotSettings & { phase: AutopilotPhase };
@@ -540,6 +541,28 @@ function AutopilotPanel({ state, onChange }: { state: State; onChange: () => Pro
 
       <div className="setup">
         <h3>Studio setup</h3>
+        <div className="setup-row">
+          <label htmlFor="style" className="inline">
+            Story style
+          </label>
+          <select
+            id="style"
+            value={state.style}
+            disabled={saving}
+            onChange={async (e) => {
+              setSaving(true);
+              try {
+                await fetch("/api/style", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ style: e.target.value }) });
+                await onChange();
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            <option value="hook">Hook: &ldquo;in a world where...&rdquo;, underdog reveal, Part 2 cliffhanger (60 to 90s)</option>
+            <option value="cozy">Cozy: gentle tales with speech bubbles (30 to 45s)</option>
+          </select>
+        </div>
         <div className="setup-row">
           <label htmlFor="engine" className="inline">
             Story writer

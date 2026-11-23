@@ -23,7 +23,7 @@ export function musicStatus(): MusicStatus {
 
 /** Picks a mood from how the characters feel across the story. */
 export function pickMood(story: Story): MusicMood {
-  const score: Record<MusicMood, number> = { playful: 0, tender: 0, mystery: 0, adventure: 0, dreamy: 0 };
+  const score: Record<MusicMood, number> = { playful: 0, tender: 0, mystery: 0, adventure: 0, dreamy: 0, epic: story.style === "hook" ? 4 : 0 };
   for (const beat of story.beats) {
     for (const c of beat.cast) {
       if (c.mood === "happy" || c.mood === "excited") score.playful += 1;
@@ -32,11 +32,13 @@ export function pickMood(story: Story): MusicMood {
       if (c.mood === "angry" || c.action === "walk" || c.action === "jump") score.adventure += 0.7;
     }
     if (beat.time === "night" && (beat.setting === "bedroom" || beat.setting === "space")) score.dreamy += 1.5;
+    if (beat.setting === "palace" || beat.setting === "arena") score.epic += 1;
   }
   const text = `${story.title} ${story.logline}`.toLowerCase();
   if (/\b(sleep|dream|star|moon|lullaby|wish)/.test(text)) score.dreamy += 2;
   if (/\b(quest|race|chase|escape|adventure|journey|treasure)/.test(text)) score.adventure += 2;
   if (/\b(mystery|secret|strange|ghost|shadow|missing|lost)/.test(text)) score.mystery += 1.5;
+  if (/\b(power|rank|chosen|strongest|legend|wings|destiny|awaken)/.test(text)) score.epic += 2;
   if (/\b(miss|goodbye|alone|lonely|grand(ma|pa))/.test(text)) score.tender += 2;
   return (Object.keys(score) as MusicMood[]).reduce((a, b) => (score[b] > score[a] ? b : a), "playful");
 }
@@ -87,7 +89,7 @@ interface Style {
   /** Chance of a melody note on each half beat. */
   density: number;
   drums: "none" | "soft" | "full";
-  lead: "bell" | "pluck" | "flute";
+  lead: "bell" | "pluck" | "flute" | "brass";
   echo: number;
 }
 
@@ -98,6 +100,7 @@ const STYLES: Record<MusicMood, Style> = {
   tender: { bpm: 72, key: 57, chords: [MIN, [5, 8, 12], [-2, 2, 5], [3, 7, 10]], scale: [0, 3, 5, 7, 10, 12], density: 0.35, drums: "none", lead: "flute", echo: 0.3 },
   mystery: { bpm: 88, key: 55, chords: [MIN, [1, 5, 8], MIN, [-1, 3, 7]], scale: [0, 3, 5, 6, 7, 10], density: 0.4, drums: "soft", lead: "pluck", echo: 0.35 },
   adventure: { bpm: 124, key: 62, chords: [MAJ, [-2, 2, 5], [5, 9, 12], MAJ], scale: [0, 2, 4, 5, 7, 9, 12], density: 0.6, drums: "full", lead: "flute", echo: 0.12 },
+  epic: { bpm: 92, key: 62, chords: [MIN, [-4, 0, 3], [3, 7, 10], [-2, 2, 5]], scale: [0, 2, 3, 5, 7, 10, 12], density: 0.45, drums: "full", lead: "brass", echo: 0.2 },
   dreamy: { bpm: 76, key: 65, chords: [[0, 4, 7, 11], [5, 9, 12, 16], [2, 5, 9, 12], [7, 11, 14, 17]], scale: [0, 2, 4, 7, 9, 12, 14], density: 0.45, drums: "none", lead: "bell", echo: 0.4 },
 };
 
@@ -165,11 +168,20 @@ export function compose(mood: MusicMood, seconds: number, seed: number): Buffer 
         const dur = beat * (st.lead === "flute" ? 0.95 : 0.7);
         add(at, dur, (x) => {
           if (st.lead === "bell") return 0.09 * Math.exp(-x * 4) * (Math.sin(2 * Math.PI * f * x) + 0.4 * Math.sin(2 * Math.PI * f * 2.76 * x));
+          if (st.lead === "brass") {
+            let v = 0;
+            for (let h = 1; h <= 6; h++) v += Math.sin(2 * Math.PI * f * h * x) / h;
+            return 0.06 * env(x, dur, 0.05, 0.12) * v;
+          }
           if (st.lead === "pluck") return 0.1 * Math.exp(-x * 7) * (Math.sin(2 * Math.PI * f * x) + 0.3 * Math.sin(4 * Math.PI * f * x));
           const vib = 1 + 0.004 * Math.sin(2 * Math.PI * 5 * x);
           return 0.07 * env(x, dur, 0.06, 0.15) * Math.sin(2 * Math.PI * f * vib * x);
         });
       }
+    }
+    // Epic: a deep boom at the start of every other bar.
+    if (mood === "epic" && b % 2 === 0) {
+      add(t, 1.2, (x) => 0.35 * Math.exp(-x * 3.5) * Math.sin(2 * Math.PI * (38 + 40 * Math.exp(-x * 12)) * x));
     }
     // Drums.
     if (st.drums !== "none" && b >= 1) {

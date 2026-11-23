@@ -65,6 +65,7 @@ The first video takes a little longer while Reelhouse downloads a small browser 
 - **By hand:** click the **Research Desk**, type a theme, press **Pitch stories**, then **Produce** one.
 - **On autopilot:** click the **Producer's Office**, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick stories per day, and switch **Autopilot** on.
 
+- **Story style:** in the Producer's Office, **Hook** makes 60 to 90 second "in a world where..." stories with an underdog reveal and a Part 2 cliffhanger. **Cozy** makes gentle 30 to 45 second tales.
 - **Trends:** click the **Trend Lookout** on the roof and press **Check trends now** to see what's popular this week. Autopilot uses these trends in its pitches on its own.
 
 - **Music:** every story gets its own background tune automatically. To use your own songs, put MP3 files in the `music` folder (see `music/README.md`). Only use music you have the rights to post.
@@ -99,6 +100,7 @@ Claude writes stronger stories but costs a few cents per story. Get a key at htt
 | `PIPER_CHARACTER_VOICE` | Multi-speaker voice for characters | `en_US-libritts_r-medium` |
 | `REELHOUSE_VOICE` | `0` turns voiceover off | on |
 | `REELHOUSE_OUTPUT_DIR` | Where finished stories are saved | `./output` |
+| `REELHOUSE_STYLE` | Force `hook` or `cozy` | chosen in the app |
 | `REELHOUSE_MUSIC` | `0` turns background music off | on |
 | `REELHOUSE_SUBREDDITS` | Reddit communities the Trend Lookout reads, separated by commas | `aivideo,animation,WritingPrompts,shortstories` |
 | `REELHOUSE_TRENDS_RSS` | Google Trends feed (set it empty to skip Google Trends) | US daily trends |

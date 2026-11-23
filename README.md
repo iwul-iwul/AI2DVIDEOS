@@ -20,6 +20,15 @@ A 2D studio building where each room is an AI agent that does one real step of m
 
 ![The Trend Lookout](docs/trend-lookout.png)
 
+## Story styles
+
+Pick one in the Producer's Office under **Story style**:
+
+- **Hook** (default): 60 to 90 second stories told by a first-person narrator. The first line states the world's rule ("Everyone gets their star mark at twelve"), the hero is the overlooked underdog, the big day brings a reveal nobody expected, and it ends on a cliffhanger with a "Part 2?" card. Fast cuts with close-ups on big reactions, big captions a few words at a time with one key word highlighted, no title card, and epic music.
+- **Cozy**: gentle 30 to 45 second tales with a narrator box, speech bubbles and a title card.
+
+![Frames from a hook-style story](docs/hook-frames.png)
+
 ## Autopilot
 
 Open the Producer's Office, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick how many stories per day, and switch autopilot on. From then on, each run:
@@ -73,7 +82,8 @@ A note on licenses: Ollama, Qwen 2.5 and Piper are open source. The video render
 - `lib/voice.ts` the Sound Booth: Piper voiceover.
 - `lib/music.ts` background music: picks a mood, then composes a tune (chords, bass, melody, light drums) or picks one of your tracks.
 - `lib/pipeline.ts` runs one job at a time: script, art, edit, ship.
-- `remotion/` the story video: 8 backgrounds (forest, city, bedroom, space, beach, castle, cafe, classroom) in day, sunset and night, characters with 7 expressions and 5 actions, speech bubbles, narration, title and end cards.
+- `lib/style.ts` the story styles and what each asks of the writers.
+- `remotion/` the story video: 10 backgrounds (forest, city, bedroom, space, beach, castle, cafe, classroom, palace, arena) in day, sunset and night, characters with 7 expressions and 5 actions, speech bubbles, narration, title and end cards.
 - `data/` SQLite database and rendered MP4s (git-ignored).
 
 ## Not yet built

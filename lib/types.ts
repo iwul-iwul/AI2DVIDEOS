@@ -1,6 +1,6 @@
 // Shared types for the studio pipeline and the story video composition.
 
-export const SETTINGS = ["forest", "city", "bedroom", "space", "beach", "castle", "cafe", "classroom"] as const;
+export const SETTINGS = ["forest", "city", "bedroom", "space", "beach", "castle", "cafe", "classroom", "palace", "arena"] as const;
 export type Setting = (typeof SETTINGS)[number];
 
 export const MOODS = ["happy", "sad", "surprised", "angry", "thinking", "excited", "scared"] as const;
@@ -59,7 +59,17 @@ export interface Beat {
   line: string;
 }
 
+/**
+ * hook: first-person narrator, a world-rule hook, an underdog reveal and a cliffhanger,
+ * told in fast cuts with big captions (60 to 90 seconds).
+ * cozy: gentle 30 to 45 second tales with a narrator box and speech bubbles.
+ */
+export const STORY_STYLES = ["hook", "cozy"] as const;
+export type StoryStyle = (typeof STORY_STYLES)[number];
+
 export interface Story {
+  /** Missing on stories written before styles existed: treat as cozy. */
+  style?: StoryStyle;
   title: string;
   logline: string;
   characters: Character[];
@@ -74,7 +84,7 @@ export interface AudioCue {
   frames: number;
 }
 
-export const MUSIC_MOODS = ["playful", "tender", "mystery", "adventure", "dreamy"] as const;
+export const MUSIC_MOODS = ["playful", "tender", "mystery", "adventure", "dreamy", "epic"] as const;
 export type MusicMood = (typeof MUSIC_MOODS)[number];
 
 export interface MusicCue {
@@ -89,12 +99,14 @@ export interface MusicCue {
 /** A beat with timing, produced by the Art Studio and drawn by Remotion. */
 export interface Scene extends Beat {
   durationInFrames: number;
+  /** Frame (within the scene) where the narration starts. */
+  narrationStart?: number;
   /** Frame (within the scene) where the dialogue line starts. */
   lineStart: number;
   narrationAudio: AudioCue | null;
   lineAudio: AudioCue | null;
   /** Camera move for this scene. */
-  camera: "push" | "pan-left" | "pan-right" | "still";
+  camera: "push" | "pan-left" | "pan-right" | "still" | "close";
 }
 
 export interface VideoProps {
@@ -105,6 +117,7 @@ export interface VideoProps {
   scenes: Scene[];
   /** Base URL the renderer loads voice and music files from; null for a silent video. */
   audioBase: string | null;
+  style?: StoryStyle;
   /** Background music, mixed under the voices. */
   music?: MusicCue | null;
   [key: string]: unknown;
