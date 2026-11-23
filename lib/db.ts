@@ -3,7 +3,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import type { Idea, Job, Script, Stage, VideoProps } from "./types";
+import type { Idea, Job, Story, Stage, VideoProps } from "./types";
 
 export const DATA_DIR = path.join(process.cwd(), "data");
 export const RENDER_DIR = path.join(DATA_DIR, "renders");
@@ -73,7 +73,7 @@ const toJob = (r: JobRow): Job => ({
   ideaId: r.idea_id,
   stage: r.stage,
   progress: r.progress,
-  script: r.script ? (JSON.parse(r.script) as Script) : null,
+  script: r.script ? (JSON.parse(r.script) as Story) : null,
   video: r.video ? (JSON.parse(r.video) as VideoProps) : null,
   error: r.error,
   createdAt: r.created_at,
@@ -115,7 +115,7 @@ export function createJob(ideaId: number, stage: Stage): Job {
 
 export function updateJob(
   id: number,
-  patch: Partial<{ stage: Job["stage"]; progress: number; script: Script; video: VideoProps; error: string }>,
+  patch: Partial<{ stage: Job["stage"]; progress: number; script: Story; video: VideoProps; error: string }>,
 ): void {
   const sets: string[] = [];
   const vals: unknown[] = [];

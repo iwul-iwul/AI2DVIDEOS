@@ -1,7 +1,7 @@
 // The production line: Script Room -> Art Studio -> Edit Bay -> Shipping Dock.
 // Research happens earlier, when ideas are added to the queue.
 
-import { designScenes } from "./agents/art";
+import { designVideo } from "./agents/art";
 import { writeScript } from "./agents/claude";
 import { createJob, getIdea, setIdeaStatus, updateJob, videoPath } from "./db";
 import { renderVideo } from "./render";
@@ -27,8 +27,7 @@ async function produce(jobId: number, ideaId: number): Promise<void> {
     updateJob(jobId, { script, stage: "art" });
 
     // Art Studio
-    const scenes = designScenes(script);
-    const video = { title: script.title, scenes };
+    const video = designVideo(script);
     updateJob(jobId, { video, stage: "edit" });
 
     // Edit Bay

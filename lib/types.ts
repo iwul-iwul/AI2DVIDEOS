@@ -1,71 +1,83 @@
-// Shared types for the studio pipeline and the video composition.
+// Shared types for the studio pipeline and the story video composition.
 
-export const ICONS = [
-  "bulb",
-  "chart",
-  "clock",
-  "star",
-  "check",
-  "rocket",
-  "heart",
-  "chat",
-  "warning",
-  "money",
-] as const;
-export type IconName = (typeof ICONS)[number];
+export const SETTINGS = ["forest", "city", "bedroom", "space", "beach", "castle", "cafe", "classroom"] as const;
+export type Setting = (typeof SETTINGS)[number];
 
-export const MOODS = ["happy", "thinking", "excited", "pointing"] as const;
+export const MOODS = ["happy", "sad", "surprised", "angry", "thinking", "excited", "scared"] as const;
 export type Mood = (typeof MOODS)[number];
 
-export const SHOT_KINDS = ["hook", "point", "list", "outro"] as const;
-export type ShotKind = (typeof SHOT_KINDS)[number];
+export const ACTIONS = ["idle", "enter", "jump", "shake", "walk"] as const;
+export type Action = (typeof ACTIONS)[number];
 
-/** An idea sitting in the queue, produced by the Research Desk. */
+export const COLORS = ["yellow", "pink", "blue", "green", "orange", "purple", "red", "teal"] as const;
+export type CharacterColor = (typeof COLORS)[number];
+
+export const ACCESSORIES = ["none", "hat", "bow", "glasses", "crown", "scarf"] as const;
+export type Accessory = (typeof ACCESSORIES)[number];
+
+export const TIMES = ["day", "sunset", "night"] as const;
+export type TimeOfDay = (typeof TIMES)[number];
+
+/** An idea sitting in the queue, produced by the Research Desk (story pitch). */
 export interface Idea {
   id: number;
   topic: string;
   title: string;
+  /** One-line logline. */
   hook: string;
+  /** Genre and the twist that makes it worth watching. */
   angle: string;
   status: "queued" | "in_production" | "done";
   createdAt: string;
 }
 
-/** One shot of the script, produced by the Script Room. */
-export interface Shot {
-  kind: ShotKind;
-  /** Big text shown on screen. Short. */
-  onScreen: string;
-  /** Supporting line (caption under the big text, or list items joined by "|"). */
-  line: string;
-  icon: IconName;
-  mood: Mood;
+export interface Character {
+  name: string;
+  color: CharacterColor;
+  accessory: Accessory;
 }
 
-export interface Script {
+export interface CastMember {
+  /** Index into Story.characters. */
+  who: number;
+  mood: Mood;
+  action: Action;
+}
+
+/** One story beat, written by the Script Room. */
+export interface Beat {
+  setting: Setting;
+  time: TimeOfDay;
+  /** Narrator caption, shown at the bottom. */
+  narration: string;
+  /** Characters on screen, left to right. */
+  cast: CastMember[];
+  /** Optional line of dialogue. speaker is an index into Story.characters, or -1 for none. */
+  speaker: number;
+  line: string;
+}
+
+export interface Story {
   title: string;
-  shots: Shot[];
+  logline: string;
+  characters: Character[];
+  beats: Beat[];
   caption: string;
   hashtags: string[];
 }
 
-export interface Palette {
-  bg: string;
-  bg2: string;
-  ink: string;
-  accent: string;
-  card: string;
-}
-
-/** A fully designed scene, produced by the Art Studio and drawn by Remotion. */
-export interface Scene extends Shot {
+/** A beat with timing, produced by the Art Studio and drawn by Remotion. */
+export interface Scene extends Beat {
   durationInFrames: number;
-  palette: Palette;
-  layout: "center" | "left" | "right";
+  /** Camera move for this scene. */
+  camera: "push" | "pan-left" | "pan-right" | "still";
 }
 
 export interface VideoProps {
   title: string;
+  characters: Character[];
+  titleFrames: number;
+  endFrames: number;
   scenes: Scene[];
   [key: string]: unknown;
 }
@@ -79,7 +91,7 @@ export interface Job {
   stage: Stage | "done" | "failed";
   /** 0 to 1, used by the Edit Bay while rendering. */
   progress: number;
-  script: Script | null;
+  script: Story | null;
   video: VideoProps | null;
   error: string | null;
   createdAt: string;

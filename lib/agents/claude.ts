@@ -1,10 +1,10 @@
-// Research Desk and Script Room, powered by Claude with structured outputs.
+// Research Desk (story pitches) and Script Room (story writer), powered by Claude with structured outputs.
 
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { ICONS, MOODS, SHOT_KINDS, type Script } from "../types";
-import { demoIdeas, demoScript, type DemoIdeaInput } from "./demo";
+import { ACCESSORIES, ACTIONS, COLORS, MOODS, SETTINGS, TIMES, type Story } from "../types";
+import { demoIdeas, demoScript, type IdeaInput } from "./demo";
 
 const MODEL = "claude-opus-5-5";
 
@@ -39,55 +39,73 @@ async function ask<T extends z.ZodType>(system: string, prompt: string, schema: 
   return response.parsed_output as z.infer<T>;
 }
 
-const IdeasSchema = z.object({
+const PitchSchema = z.object({
   ideas: z
     .array(
       z.object({
-        title: z.string().describe("Short video title, under 60 characters"),
-        hook: z.string().describe("First spoken line, under 15 words, creates curiosity"),
-        angle: z.string().describe("One sentence on the approach that makes this video worth watching"),
+        title: z.string().describe("Story title, 2 to 5 words"),
+        hook: z.string().describe("Logline: one sentence, under 25 words, that makes you want to watch"),
+        angle: z.string().describe("Genre and the twist or emotional payoff, one sentence"),
       }),
     )
-    .describe("3 to 5 ideas"),
+    .describe("3 to 5 distinct story pitches"),
 });
 
-export async function researchIdeas(topic: string): Promise<Omit<DemoIdeaInput, "topic">[]> {
+export async function researchIdeas(topic: string): Promise<Omit<IdeaInput, "topic">[]> {
   if (isDemoMode()) return demoIdeas(topic);
   const out = await ask(
-    "You are the research lead at a short-form video studio. You find angles for 15 to 45 second vertical videos (TikTok, Reels, Shorts) that are useful, specific and honest. Avoid clickbait claims you can't back up.",
-    `Topic: ${topic}\n\nPropose 3 to 5 distinct video ideas for this topic.`,
-    IdeasSchema,
+    "You develop ideas for 30 to 45 second animated short stories posted as vertical videos (TikTok, Reels, Shorts). Stories star simple, round cartoon characters, need at most 3 characters, and must land a clear emotional payoff or twist in under a minute. Keep them original and suitable for all ages.",
+    `Theme or prompt from the creator: ${topic}\n\nPitch 3 to 5 different short stories. Vary the genre (for example comedy, heartwarming, mystery, adventure, spooky-cute).`,
+    PitchSchema,
   );
   return out.ideas.slice(0, 5);
 }
 
-const ScriptSchema = z.object({
+const StorySchema = z.object({
   title: z.string(),
-  shots: z
+  logline: z.string(),
+  characters: z
     .array(
       z.object({
-        kind: z.enum(SHOT_KINDS),
-        onScreen: z.string().describe("Big on-screen text, 2 to 7 words"),
-        line: z
-          .string()
-          .describe("Supporting sentence under 14 words. For a 'list' shot: 2 to 4 short items separated by ' | '"),
-        icon: z.enum(ICONS),
-        mood: z.enum(MOODS).describe("How the host character reacts in this shot"),
+        name: z.string().describe("Short, memorable first name"),
+        color: z.enum(COLORS),
+        accessory: z.enum(ACCESSORIES),
       }),
     )
-    .describe("4 to 7 shots: first is 'hook', last is 'outro'"),
-  caption: z.string().describe("Post caption, one or two sentences, ends with a question"),
+    .describe("1 to 3 characters. Give each a different color."),
+  beats: z
+    .array(
+      z.object({
+        setting: z.enum(SETTINGS),
+        time: z.enum(TIMES),
+        narration: z.string().describe("Narrator caption, under 16 words. Can be empty if the dialogue carries the beat."),
+        cast: z
+          .array(
+            z.object({
+              who: z.number().int().describe("Index into characters"),
+              mood: z.enum(MOODS),
+              action: z.enum(ACTIONS).describe("enter = slides in, walk = moving, jump = bouncing with emotion, shake = trembling or angry"),
+            }),
+          )
+          .describe("Characters on screen in this beat, 1 to 3, left to right"),
+        speaker: z.number().int().describe("Index of the character who speaks in this beat, or -1 for no dialogue"),
+        line: z.string().describe("What the speaker says, under 14 words. Empty when speaker is -1."),
+      }),
+    )
+    .describe("5 to 8 beats: setup, rising problem, turn, payoff"),
+  caption: z.string().describe("Post caption, one or two sentences, ends with a question to the viewer"),
   hashtags: z.array(z.string()).describe("3 to 6 hashtags, each starting with #"),
 });
 
-export async function writeScript(idea: DemoIdeaInput): Promise<Script> {
+export async function writeScript(idea: IdeaInput): Promise<Story> {
   if (isDemoMode()) return demoScript(idea);
   const out = await ask(
-    "You are the head writer at a short-form video studio. You write punchy, accurate scripts for 15 to 45 second vertical animated videos with a cartoon host. Every shot must earn its place. Keep on-screen text short enough to read at a glance.",
-    `Write the script for this video.\n\nTopic: ${idea.topic}\nTitle: ${idea.title}\nHook: ${idea.hook}\nAngle: ${idea.angle}`,
-    ScriptSchema,
+    "You are the head writer of an animated short-story channel. You write 30 to 45 second stories for vertical video, told through narrator captions and short speech bubbles over simple 2D scenes. Every beat moves the story. Show emotion through the characters' moods and actions. End on the payoff, not on a moral lecture. Keep it original and suitable for all ages.",
+    `Write this story.\n\nTheme: ${idea.topic}\nTitle: ${idea.title}\nLogline: ${idea.hook}\nGenre and twist: ${idea.angle}`,
+    StorySchema,
   );
-  const shots = out.shots.slice(0, 7);
-  if (shots.length < 2) throw new Error("The script came back with too few shots.");
-  return { ...out, shots };
+  if (!out.characters.length) throw new Error("The story came back with no characters.");
+  const beats = out.beats.slice(0, 8);
+  if (beats.length < 3) throw new Error("The story came back with too few beats.");
+  return { ...out, characters: out.characters.slice(0, 3), beats };
 }

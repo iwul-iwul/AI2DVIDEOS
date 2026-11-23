@@ -24,7 +24,7 @@ export async function renderVideo(
   const { renderMedia, selectComposition } = await import("@remotion/renderer");
   const url = await getServeUrl();
   const browserExecutable = process.env.REMOTION_BROWSER || null;
-  const composition = await selectComposition({ serveUrl: url, id: "Short", inputProps: props, browserExecutable });
+  const composition = await selectComposition({ serveUrl: url, id: "Story", inputProps: props, browserExecutable });
   await renderMedia({
     composition,
     serveUrl: url,

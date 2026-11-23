@@ -81,6 +81,14 @@ button.ghost { background: #fff; color: #1b1b2f; }
 .scenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
 .scene-card { aspect-ratio: 9 / 16; border-radius: 12px; border: 2px solid #1b1b2f; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; font-family: var(--font-display); }
 .scene-n { font-weight: 700; opacity: 0.6; }
+.scene-card { text-transform: capitalize; }
+.scene-day { background: linear-gradient(170deg, #7cc6f2, #d4f0ff); }
+.scene-sunset { background: linear-gradient(170deg, #ff8a65, #ffd6a5); }
+.scene-night { background: linear-gradient(170deg, #0b1d3a, #2e3f6b); color: #fff; }
+.cast { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.cast-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 2px solid var(--line); border-radius: 999px; padding: 4px 10px; font-weight: 800; font-size: 14px; }
+.swatch { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #1b1b2f; }
+.line { font-style: italic; }
 
 .progress { position: relative; height: 32px; border-radius: 12px; background: #eee; border: 2px solid #1b1b2f; overflow: hidden; }
 .progress div { height: 100%; background: var(--good); transition: width 0.4s; }

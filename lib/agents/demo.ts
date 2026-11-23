@@ -1,56 +1,97 @@
-// Demo mode: template-based research and scripts so the whole studio works
+// Demo mode: template-based pitches and stories so the whole studio works
 // without a Claude API key. Output is generic but the pipeline is real.
 
-import type { Script } from "../types";
+import type { Story } from "../types";
 
-export interface DemoIdeaInput {
+export interface IdeaInput {
   topic: string;
   title: string;
   hook: string;
   angle: string;
 }
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-export function demoIdeas(topic: string): Omit<DemoIdeaInput, "topic">[] {
-  const t = topic.trim() || "your niche";
+export function demoIdeas(topic: string): Omit<IdeaInput, "topic">[] {
+  const t = topic.trim() || "a small robot";
   return [
     {
-      title: `3 ${t} mistakes beginners make`,
-      hook: `You're probably making mistake #2 right now.`,
-      angle: "Myth-busting list with a quick fix for each mistake.",
+      title: `The Lost Star`,
+      hook: `When a star falls into the forest, ${t} has one night to send it home.`,
+      angle: "Heartwarming adventure. Twist: the star was never lost, it wanted a friend.",
     },
     {
-      title: `The 60-second guide to ${t}`,
-      hook: `Everything you need to know about ${t} in one minute.`,
-      angle: "Fast explainer with one key takeaway.",
+      title: `The Last Slice`,
+      hook: `Two best friends, one slice of cake, and ${t} caught in the middle.`,
+      angle: "Comedy. Twist: they both give it away and end up sharing.",
     },
     {
-      title: `${cap(t)}: what nobody tells you`,
-      hook: `Nobody talks about this side of ${t}.`,
-      angle: "Contrarian take backed by one surprising fact.",
+      title: `Night Shift`,
+      hook: `Everyone thinks the city sleeps at night. ${t.charAt(0).toUpperCase() + t.slice(1)} knows better.`,
+      angle: "Cozy mystery. Twist: the noises are friends throwing a surprise party.",
     },
   ];
 }
 
-export function demoScript(idea: DemoIdeaInput): Script {
-  const t = idea.topic || "this";
+/** A short demo story. It uses the idea's title and logline so each run feels tied to the pitch. */
+export function demoScript(idea: IdeaInput): Story {
   return {
     title: idea.title,
-    shots: [
-      { kind: "hook", onScreen: idea.title, line: idea.hook || "Stay till the end.", icon: "bulb", mood: "excited" },
-      { kind: "point", onScreen: "Start small", line: `Pick one part of ${t} and do it daily.`, icon: "clock", mood: "pointing" },
-      { kind: "point", onScreen: "Track it", line: "What you measure gets better.", icon: "chart", mood: "thinking" },
-      {
-        kind: "list",
-        onScreen: "Quick wins",
-        line: "Set a timer | Batch the boring stuff | Review every Friday",
-        icon: "check",
-        mood: "happy",
-      },
-      { kind: "outro", onScreen: "Follow for part 2", line: "Save this so you don't forget.", icon: "heart", mood: "excited" },
+    logline: idea.hook,
+    characters: [
+      { name: "Mo", color: "yellow", accessory: "scarf" },
+      { name: "Lumi", color: "purple", accessory: "bow" },
     ],
-    caption: `${idea.title}. Which tip are you trying first?`,
-    hashtags: [`#${t.replace(/\s+/g, "")}`, "#tips", "#learnontiktok", "#shorts"],
+    beats: [
+      {
+        setting: "bedroom",
+        time: "night",
+        narration: idea.hook,
+        cast: [{ who: 0, mood: "thinking", action: "idle" }],
+        speaker: 0,
+        line: "Something feels different tonight...",
+      },
+      {
+        setting: "forest",
+        time: "night",
+        narration: "A soft glow led Mo deep into the forest.",
+        cast: [{ who: 0, mood: "scared", action: "walk" }],
+        speaker: -1,
+        line: "",
+      },
+      {
+        setting: "forest",
+        time: "night",
+        narration: "And there, under the tallest tree, sat someone new.",
+        cast: [
+          { who: 0, mood: "surprised", action: "jump" },
+          { who: 1, mood: "sad", action: "enter" },
+        ],
+        speaker: 1,
+        line: "Please don't run. I'm a little lost.",
+      },
+      {
+        setting: "city",
+        time: "night",
+        narration: "They searched the whole city together.",
+        cast: [
+          { who: 0, mood: "excited", action: "walk" },
+          { who: 1, mood: "happy", action: "walk" },
+        ],
+        speaker: 0,
+        line: "We'll find your way home. I promise!",
+      },
+      {
+        setting: "beach",
+        time: "sunset",
+        narration: "But when the sun came up, Lumi didn't want to leave.",
+        cast: [
+          { who: 0, mood: "happy", action: "idle" },
+          { who: 1, mood: "excited", action: "jump" },
+        ],
+        speaker: 1,
+        line: "Maybe home is wherever my friend is.",
+      },
+    ],
+    caption: `${idea.title}: a tiny story about finding a friend. What should happen next?`,
+    hashtags: ["#shortstory", "#animation", "#storytime", "#2danimation"],
   };
 }

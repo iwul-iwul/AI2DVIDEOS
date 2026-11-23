@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type { Idea, Job } from "@/lib/types";
+import type { CharacterColor, Idea, Job } from "@/lib/types";
 import { Building, ROOMS, type RoomId } from "./Building";
 
 interface State {
@@ -15,6 +15,17 @@ const STAGE_ROOM: Partial<Record<Job["stage"], RoomId>> = {
   art: "art",
   edit: "edit",
   ship: "ship",
+};
+
+const SWATCH: Record<CharacterColor, string> = {
+  yellow: "#ffd23f",
+  pink: "#ff8fab",
+  blue: "#5fa8ff",
+  green: "#6bd68f",
+  orange: "#ff9f43",
+  purple: "#b28dff",
+  red: "#ff6b6b",
+  teal: "#3ccfcf",
 };
 
 const isActive = (j: Job) => j.stage !== "done" && j.stage !== "failed";
@@ -129,21 +140,21 @@ export default function Studio() {
 
             {selected === "research" && (
               <form onSubmit={research} className="research-form">
-                <label htmlFor="topic">What should the next videos be about?</label>
+                <label htmlFor="topic">What should the next stories be about?</label>
                 <div className="row">
                   <input
                     id="topic"
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
-                    placeholder="e.g. budgeting for students"
+                    placeholder="e.g. a shy robot who wants to dance"
                     maxLength={200}
                     disabled={researching}
                   />
                   <button type="submit" disabled={researching || !topic.trim()}>
-                    {researching ? "Researching…" : "Find ideas"}
+                    {researching ? "Pitching…" : "Pitch stories"}
                   </button>
                 </div>
-                <p className="muted small">New ideas land in the queue below. Press Produce on one to send it down the line.</p>
+                <p className="muted small">Story pitches land in the queue below. Press Produce on one to turn it into a video.</p>
               </form>
             )}
 
@@ -152,17 +163,35 @@ export default function Studio() {
             {selected === "script" && focusJob && (
               <JobHeader job={focusJob} idea={ideaById.get(focusJob.ideaId)}>
                 {focusJob.script ? (
-                  <ol className="shots">
-                    {focusJob.script.shots.map((s, i) => (
-                      <li key={i}>
-                        <span className="tag">{s.kind}</span>
-                        <strong>{s.onScreen}</strong>
-                        <span className="muted">{s.line}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  <>
+                    <p className="muted small">{focusJob.script.logline}</p>
+                    <div className="cast">
+                      {focusJob.script.characters.map((c, i) => (
+                        <span key={i} className="cast-chip">
+                          <span className="swatch" style={{ background: SWATCH[c.color] }} />
+                          {c.name}
+                          {c.accessory !== "none" && <span className="muted"> · {c.accessory}</span>}
+                        </span>
+                      ))}
+                    </div>
+                    <ol className="shots">
+                      {focusJob.script.beats.map((b, i) => (
+                        <li key={i}>
+                          <span className="tag">
+                            {b.setting} · {b.time}
+                          </span>
+                          {b.narration && <span>{b.narration}</span>}
+                          {b.speaker >= 0 && b.line && (
+                            <span className="line">
+                              <strong>{focusJob.script!.characters[b.speaker]?.name}:</strong> “{b.line}”
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </>
                 ) : (
-                  <p className="muted">{focusJob.stage === "failed" ? "No script." : "Quill is writing the script…"}</p>
+                  <p className="muted">{focusJob.stage === "failed" ? "No script." : "Quill is writing the story…"}</p>
                 )}
               </JobHeader>
             )}
@@ -172,15 +201,19 @@ export default function Studio() {
                 {focusJob.video ? (
                   <div className="scenes">
                     {focusJob.video.scenes.map((s, i) => (
-                      <div key={i} className="scene-card" style={{ background: `linear-gradient(170deg, ${s.palette.bg}, ${s.palette.bg2})`, color: s.palette.ink }}>
+                      <div key={i} className={`scene-card scene-${s.time}`}>
                         <span className="scene-n">{i + 1}</span>
-                        <strong>{s.onScreen}</strong>
-                        <span className="small">{(s.durationInFrames / 30).toFixed(1)}s · {s.icon} · {s.mood}</span>
+                        <strong>{s.setting}</strong>
+                        <span className="small">
+                          {s.cast.map((c) => focusJob.video!.characters[c.who]?.name).join(", ")}
+                          <br />
+                          {(s.durationInFrames / 30).toFixed(1)}s · {s.camera}
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="muted">Dot is waiting for the shot list.</p>
+                  <p className="muted">Dot is waiting for the story.</p>
                 )}
               </JobHeader>
             )}
@@ -214,11 +247,11 @@ export default function Studio() {
 
           <section className="panel queue">
             <div className="panel-head">
-              <h2>Idea queue</h2>
+              <h2>Story queue</h2>
               <span className="muted small">{ideas.filter((i) => i.status === "queued").length} waiting</span>
             </div>
             {ideas.length === 0 ? (
-              <p className="muted">The queue is empty. Ask the Research Desk for ideas.</p>
+              <p className="muted">The queue is empty. Ask the Research Desk for story pitches.</p>
             ) : (
               <ul>
                 {ideas.map((idea) => {
@@ -227,7 +260,7 @@ export default function Studio() {
                     <li key={idea.id} className={`idea idea-${idea.status}`}>
                       <div className="idea-text">
                         <strong>{idea.title}</strong>
-                        <span className="muted small">“{idea.hook}”</span>
+                        <span className="muted small">{idea.hook}</span>
                         {job?.stage === "failed" && <span className="error small">Last try failed: {job.error}</span>}
                       </div>
                       {idea.status === "queued" && (

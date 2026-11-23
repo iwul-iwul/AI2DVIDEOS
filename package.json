@@ -14,6 +14,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
     "@remotion/bundler": "4.0.545",
+    "@remotion/google-fonts": "4.0.545",
     "@remotion/renderer": "4.0.545",
     "better-sqlite3": "^13.2.0",
     "next": "^16.4.6",

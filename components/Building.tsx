@@ -12,9 +12,9 @@ export interface RoomInfo {
 }
 
 export const ROOMS: RoomInfo[] = [
-  { id: "research", name: "Research Desk", agent: "Pip", role: "Finds angles and hooks for a topic" },
-  { id: "script", name: "Script Room", agent: "Quill", role: "Writes the script and shot list" },
-  { id: "art", name: "Art Studio", agent: "Dot", role: "Designs each scene in 2D" },
+  { id: "research", name: "Research Desk", agent: "Pip", role: "Pitches short story ideas" },
+  { id: "script", name: "Script Room", agent: "Quill", role: "Writes the story, cast and dialogue" },
+  { id: "art", name: "Art Studio", agent: "Dot", role: "Stages each scene and camera move" },
   { id: "edit", name: "Edit Bay", agent: "Splice", role: "Animates and renders the MP4" },
   { id: "ship", name: "Shipping Dock", agent: "Hatch", role: "Packs the video with a caption" },
 ];
