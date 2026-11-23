@@ -25,42 +25,34 @@ Install these three free programs. Use the default options in each installer.
 
 On the GitHub page for this repository, click the green **Code** button, then **Download ZIP**. Unzip it somewhere easy, like your Documents folder.
 
-## 3. Open a terminal in the Reelhouse folder
+## 3. Start Reelhouse
 
-- **Windows:** open the unzipped folder, click the address bar at the top, type `cmd`, and press Enter.
-- **Mac:** open **Terminal**, type `cd ` (with a space), drag the Reelhouse folder into the Terminal window, and press Enter.
+Open the Reelhouse folder and double-click:
 
-Type each of the commands below and press Enter. Wait for one to finish before typing the next.
+- **Windows:** `Start Reelhouse.bat`. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway**.
+- **Mac:** `Start Reelhouse.command`. The first time, right-click it and choose **Open**, then **Open** again (Macs ask this for files downloaded from the internet).
 
-## 4. Install and download everything
+A window opens and Reelhouse gets everything ready by itself: it installs the app, downloads the story-writing model (about 4.7 GB), installs the voices (about 200 MB) and opens **http://localhost:3000** in your browser. The first time takes 20 to 30 minutes, mostly downloads. After that it starts in under a minute.
 
-```
-npm install
-```
-Installs the app (a few minutes).
+The badge in the top right should say **"Ollama · qwen2.5:7b · Voice on"**. If the window shows a line starting with `!!`, it tells you what's missing and what to install.
 
-```
-npm run setup:ollama
-```
-Downloads the story-writing model, about 4.7 GB. Ollama must be installed and open (on Mac, the llama icon is in the menu bar; on Windows, it's in the tray by the clock).
+**Keep that window open** while you use Reelhouse. Autopilot only works while it's open. To stop Reelhouse, close the window.
 
-```
-npm run setup:voice
-```
-Installs Piper and downloads two voices: a narrator and a set of character voices (about 200 MB).
+**Start it automatically when your computer turns on (optional):**
 
-## 5. Start Reelhouse
+- **Windows:** press `Windows + R`, type `shell:startup` and press Enter. Right-click `Start Reelhouse.bat`, choose **Create shortcut**, and move the shortcut into the folder that opened.
+- **Mac:** open **System Settings**, then **General**, then **Login Items**. Click **+** and choose `Start Reelhouse.command`.
 
-```
-npm run build
-npm start
-```
+Also set your computer not to sleep while plugged in, or autopilot pauses when it sleeps.
 
-Open **http://localhost:3000** in your browser. The badge in the top right should say **"Ollama · qwen2.5:7b · Voice on"**.
+<details>
+<summary>Prefer typing commands?</summary>
 
-The first video takes a little longer while Reelhouse downloads a small browser it uses to draw the video frames.
+In a terminal in the Reelhouse folder: `npm install`, `npm run setup:ollama`, `npm run setup:voice`, `npm run build`, then `npm start`.
 
-## 6. Make stories
+</details>
+
+## 4. Make stories
 
 - **By hand:** click the **Research Desk**, type a theme, press **Pitch stories**, then **Produce** one.
 - **On autopilot:** click the **Producer's Office**, write a channel brief (for example "cozy, funny stories about animals and friendship"), pick stories per day, and switch **Autopilot** on.
@@ -72,7 +64,6 @@ The first video takes a little longer while Reelhouse downloads a small browser 
 
 Finished videos appear in the `output` folder inside Reelhouse, each with a `caption.txt` ready to paste when you post.
 
-Reelhouse only works while the terminal from step 5 stays open. To stop it, press `Ctrl + C` in that terminal. To start it again later, open a terminal in the folder (step 3) and type `npm start`.
 
 ---
 
@@ -81,7 +72,7 @@ Reelhouse only works while the terminal from step 5 stays open. To stop it, pres
 The **Producer's Office** has a "Studio setup" section that shows what Reelhouse can see.
 
 - **"Ollama not running":** open the Ollama app, then refresh the page.
-- **"Ollama running, model not downloaded":** run `npm run setup:ollama` again.
+- **"Ollama running, model not downloaded":** start Reelhouse again (it downloads the model), or run `npm run setup:ollama`.
 - **"Voiceover off":** run `npm run setup:voice` again and read any error it prints. Usually Python isn't installed or wasn't added to PATH.
 - **Stories are weak or don't follow the format:** small local models make more mistakes than big ones. If your computer has 16 GB or more of memory, try a bigger model: run `ollama pull qwen2.5:14b`, and add the line `OLLAMA_MODEL=qwen2.5:14b` to a file named `.env.local` in the Reelhouse folder. Then restart.
 
