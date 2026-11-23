@@ -91,6 +91,7 @@ Claude writes stronger stories but costs a few cents per story. Get a key at htt
 | `PIPER_CHARACTER_VOICE` | Multi-speaker voice for characters | `en_US-libritts_r-medium` |
 | `REELHOUSE_VOICE` | `0` turns voiceover off | on |
 | `REELHOUSE_OUTPUT_DIR` | Where finished stories are saved | `./output` |
+| `REELHOUSE_PASSWORD` | Asks for a password before showing the studio (for servers; user name `reelhouse` or `REELHOUSE_USER`) | off |
 | `REELHOUSE_STYLE` | Force `hook` or `cozy` | chosen in the app |
 | `REELHOUSE_MUSIC` | `0` turns background music off | on |
 | `REELHOUSE_SUBREDDITS` | Reddit communities the Trend Lookout reads, separated by commas | `aivideo,animation,WritingPrompts,shortstories` |

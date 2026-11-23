@@ -53,6 +53,8 @@ The "Story writer" choice in the Producer's Office can be Automatic (Ollama, the
 
 ## Run it
 
+**Online, for free:** [DEPLOY-ORACLE.md](DEPLOY-ORACLE.md) puts Reelhouse on an Oracle Cloud Always Free server (4 ARM cores, 24 GB) with one pasted setup script ([`deploy/oracle-setup.sh`](deploy/oracle-setup.sh)). That script installs Ollama, Piper and the render browser, runs the app as a service behind Caddy with HTTPS on `<ip>.sslip.io`, protects it with a password (`REELHOUSE_PASSWORD`), and updates itself nightly from GitHub.
+
 The easy way: double-click `Start Reelhouse.bat` (Windows) or `Start Reelhouse.command` (Mac). It installs what's missing, starts the app and opens it in the browser. See [SETUP.md](SETUP.md).
 
 **Step-by-step guide for Windows and Mac: [SETUP.md](SETUP.md).** In short, with Node.js, Ollama and Python installed:
