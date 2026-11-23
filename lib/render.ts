@@ -19,16 +19,19 @@ function getServeUrl(): Promise<string> {
   return serveUrl;
 }
 
-/** Serves one folder of WAV files on localhost while the renderer runs. */
+const AUDIO_TYPES: Record<string, string> = { ".wav": "audio/wav", ".mp3": "audio/mpeg", ".ogg": "audio/ogg", ".m4a": "audio/mp4" };
+
+/** Serves one folder of voice and music files on localhost while the renderer runs. */
 function serveAudio(dir: string): Promise<{ base: string; close: () => void }> {
   const server = http.createServer((req, res) => {
     const name = path.basename(decodeURIComponent((req.url ?? "/").split("?")[0]));
     const file = path.join(dir, name);
-    if (!name.endsWith(".wav") || !fs.existsSync(file)) {
+    const type = AUDIO_TYPES[path.extname(name).toLowerCase()];
+    if (!type || !fs.existsSync(file)) {
       res.writeHead(404).end();
       return;
     }
-    res.writeHead(200, { "Content-Type": "audio/wav", "Access-Control-Allow-Origin": "*", "Content-Length": fs.statSync(file).size });
+    res.writeHead(200, { "Content-Type": type, "Access-Control-Allow-Origin": "*", "Content-Length": fs.statSync(file).size });
     fs.createReadStream(file).pipe(res);
   });
   return new Promise((resolve, reject) => {

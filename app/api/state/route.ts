@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { autopilotPhase, startAutopilot } from "@/lib/autopilot";
 import { getAutopilot, listActivity, listIdeas, listJobs } from "@/lib/db";
 import { engineStatus } from "@/lib/engine";
+import { musicStatus } from "@/lib/music";
 import { latestTrends } from "@/lib/trends";
 import { voiceStatus } from "@/lib/voice";
 
@@ -13,6 +14,7 @@ export async function GET() {
   return NextResponse.json({
     engine,
     voice,
+    music: musicStatus(),
     ideas: listIdeas(),
     jobs: listJobs(),
     autopilot: { ...getAutopilot(), phase: autopilotPhase() },

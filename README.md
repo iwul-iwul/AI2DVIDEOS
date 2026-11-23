@@ -12,7 +12,7 @@ A 2D studio building where each room is an AI agent that does one real step of m
 | Research Desk | Pip | Turns a theme into 3 to 5 story pitches (title, logline, genre and twist) and adds them to the queue |
 | Script Room | Quill | Writes the story: up to 3 characters (name, color, accessory) and 5 to 8 beats, each with a setting, time of day, narration, who is on screen with their mood and action, and an optional line of dialogue |
 | Art Studio | Dot | Stages each beat: timing from reading speed, camera move, and a valid cast |
-| Sound Booth | Echo | Records the narration and each character's lines with Piper, and the scenes are timed to the voices |
+| Sound Booth | Echo | Records the narration and each character's lines with Piper, and the scenes are timed to the voices. Then adds background music that fits the story's mood (playful, tender, mystery, adventure or dreamy) and dips while someone speaks. The music is composed in code for each story, or picked from your own tracks in `music/` |
 | Edit Bay | Splice | Animates the scenes with Remotion and renders the MP4 |
 | Shipping Dock | Hatch | Saves each finished story to `output/<date>_<id>_<title>/` as `video.mp4`, `caption.txt` and `story.json`, and serves it for download |
 
@@ -71,13 +71,13 @@ A note on licenses: Ollama, Qwen 2.5 and Piper are open source. The video render
 - `lib/agents/` the writing agents (pitches, producer pick, story, QA editor), rule-based QA, demo templates, and Art (deterministic scene timing).
 - `lib/trends.ts` the Trend Lookout: free public sources (no accounts or keys), summarized into themes by the story writer.
 - `lib/voice.ts` the Sound Booth: Piper voiceover.
+- `lib/music.ts` background music: picks a mood, then composes a tune (chords, bass, melody, light drums) or picks one of your tracks.
 - `lib/pipeline.ts` runs one job at a time: script, art, edit, ship.
 - `remotion/` the story video: 8 backgrounds (forest, city, bedroom, space, beach, castle, cafe, classroom) in day, sunset and night, characters with 7 expressions and 5 actions, speech bubbles, narration, title and end cards.
 - `data/` SQLite database and rendered MP4s (git-ignored).
 
 ## Not yet built
 
-- Background music.
 - Posting straight to TikTok, Reels or Shorts (each platform needs app approval).
 
 

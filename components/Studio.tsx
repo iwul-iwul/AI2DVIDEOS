@@ -14,6 +14,7 @@ interface State {
     note: string | null;
   };
   voice: { enabled: boolean; piper: boolean; narrator: boolean; characters: boolean; note: string | null };
+  music: { enabled: boolean; libraryTracks: number };
   ideas: Idea[];
   jobs: Job[];
   autopilot: AutopilotSettings & { phase: AutopilotPhase };
@@ -245,6 +246,26 @@ export default function Studio() {
                   <strong>{state.voice.enabled ? (state.voice.characters ? "on, with a voice for each character" : "on, with one voice") : "off"}</strong>.
                 </p>
                 {state.voice.note && <p className="muted small">{state.voice.note}</p>}
+                <p>
+                  <span className={state.music.enabled ? "dot-ok" : "dot-off"} /> Background music is{" "}
+                  <strong>
+                    {!state.music.enabled
+                      ? "off"
+                      : state.music.libraryTracks
+                        ? `on, picked from your ${state.music.libraryTracks} track${state.music.libraryTracks === 1 ? "" : "s"}`
+                        : "on, composed for each story"}
+                  </strong>
+                  .
+                </p>
+                {state.music.enabled && !state.music.libraryTracks && (
+                  <p className="muted small">Echo writes a short tune to match each story&apos;s mood. To use your own songs instead, put MP3 files in the music folder.</p>
+                )}
+                {focusJob?.video?.music && (
+                  <p className="small">
+                    &ldquo;{focusJob.video.title}&rdquo;: {focusJob.video.music.mood} music
+                    {focusJob.video.music.source === "library" ? ` (${focusJob.video.music.name})` : ", composed"}.
+                  </p>
+                )}
                 {focusJob?.video && (
                   <ul className="issues small">
                     {focusJob.video.scenes.map((sc, i) => (

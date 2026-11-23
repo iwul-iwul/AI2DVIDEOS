@@ -19,7 +19,7 @@ export const ROOMS: RoomInfo[] = [
   { id: "script", name: "Script Room", agent: "Quill", role: "Writes the story, cast and dialogue" },
   { id: "art", name: "Art Studio", agent: "Dot", role: "Stages each scene and camera move" },
   { id: "edit", name: "Edit Bay", agent: "Splice", role: "Animates and renders the MP4" },
-  { id: "voice", name: "Sound Booth", agent: "Echo", role: "Records the narrator and character voices" },
+  { id: "voice", name: "Sound Booth", agent: "Echo", role: "Records the narrator and character voices, and scores each story with music" },
   { id: "ship", name: "Shipping Dock", agent: "Hatch", role: "Packs the video with a caption" },
 ];
 

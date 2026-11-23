@@ -3,7 +3,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { designVideo } from "./agents/art";
+import { designVideo, totalFrames } from "./agents/art";
 import { reviewStory, writeScript } from "./agents/brain";
 import { checkStory } from "./agents/qa";
 import {
@@ -17,6 +17,7 @@ import {
   videoPath,
 } from "./db";
 import { renderVideo } from "./render";
+import { scoreStory } from "./music";
 import { jobAudioDir, recordVoices, voiceStatus, type BeatAudio } from "./voice";
 import type { Idea, Job, QaReport, Story } from "./types";
 
@@ -104,8 +105,23 @@ async function produce(jobId: number, idea: Idea): Promise<void> {
 
     // Art Studio
     const video = designVideo(story, voices);
-    updateJob(jobId, { video, stage: "edit" });
     logActivity("art", `Staged ${video.scenes.length} scenes for "${story.title}".`);
+
+    // Sound Booth scores it once the length is known.
+    try {
+      video.music = scoreStory(story, totalFrames(video), jobAudioDir(jobId), jobId);
+      if (video.music) {
+        logActivity(
+          "voice",
+          video.music.source === "library"
+            ? `Picked your track "${video.music.name}" for "${story.title}" (${video.music.mood}).`
+            : `Composed ${video.music.mood} background music for "${story.title}".`,
+        );
+      }
+    } catch (err) {
+      logActivity("voice", `No background music for "${story.title}": ${err instanceof Error ? err.message : String(err)}`, "warn");
+    }
+    updateJob(jobId, { video, stage: "edit" });
 
     // Edit Bay
     let last = 0;
@@ -118,7 +134,7 @@ async function produce(jobId: number, idea: Idea): Promise<void> {
           updateJob(jobId, { progress: p });
         }
       },
-      voices ? jobAudioDir(jobId) : undefined,
+      voices || video.music ? jobAudioDir(jobId) : undefined,
     );
     logActivity("edit", `Rendered "${story.title}".`);
 

@@ -74,6 +74,18 @@ export interface AudioCue {
   frames: number;
 }
 
+export const MUSIC_MOODS = ["playful", "tender", "mystery", "adventure", "dreamy"] as const;
+export type MusicMood = (typeof MUSIC_MOODS)[number];
+
+export interface MusicCue {
+  /** File name inside the job's audio folder. */
+  src: string;
+  mood: MusicMood;
+  /** Composed by the studio, or one of your own tracks from the music folder. */
+  source: "composed" | "library";
+  name: string | null;
+}
+
 /** A beat with timing, produced by the Art Studio and drawn by Remotion. */
 export interface Scene extends Beat {
   durationInFrames: number;
@@ -91,8 +103,10 @@ export interface VideoProps {
   titleFrames: number;
   endFrames: number;
   scenes: Scene[];
-  /** Base URL the renderer loads voice files from; null for a silent video. */
+  /** Base URL the renderer loads voice and music files from; null for a silent video. */
   audioBase: string | null;
+  /** Background music, mixed under the voices. */
+  music?: MusicCue | null;
   [key: string]: unknown;
 }
 

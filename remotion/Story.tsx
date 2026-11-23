@@ -216,11 +216,34 @@ const EndCard: React.FC<{ characters: CharacterT[] }> = ({ characters }) => {
   );
 };
 
+/** Music sits under the story and dips while someone is speaking. */
+function musicVolume(scenes: Scene[], titleFrames: number, total: number): (f: number) => number {
+  const voiced: [number, number][] = [];
+  let start = titleFrames;
+  for (const s of scenes) {
+    if (s.narrationAudio) voiced.push([start + 6, start + 6 + s.narrationAudio.frames]);
+    if (s.lineAudio && s.speaker >= 0 && s.line.trim()) voiced.push([start + s.lineStart, start + s.lineStart + s.lineAudio.frames]);
+    start += s.durationInFrames;
+  }
+  const FULL = voiced.length ? 0.32 : 0.5;
+  const UNDER = 0.1;
+  const RAMP = 8;
+  return (f) => {
+    let d = Infinity;
+    for (const [a, b] of voiced) d = Math.min(d, f < a ? a - f : f > b ? f - b : 0);
+    const level = UNDER + (FULL - UNDER) * Math.min(1, d / RAMP);
+    const fade = Math.min(1, f / 15, (total - f) / 45);
+    return Math.max(0, level * fade);
+  };
+}
+
 /** The full vertical short story: title card, scenes, end card. */
-export const StoryVideo: React.FC<VideoProps> = ({ title, characters, scenes, titleFrames, endFrames, audioBase }) => {
+export const StoryVideo: React.FC<VideoProps> = ({ title, characters, scenes, titleFrames, endFrames, audioBase, music }) => {
   let from = titleFrames;
+  const total = titleFrames + endFrames + scenes.reduce((s, x) => s + x.durationInFrames, 0);
   return (
     <AbsoluteFill style={{ background: "#111" }}>
+      {audioBase && music && <Audio src={`${audioBase}${music.src}`} loop volume={musicVolume(scenes, titleFrames, total)} />}
       <Sequence durationInFrames={titleFrames}>
         <TitleCard title={title} scene={scenes[0]} />
       </Sequence>

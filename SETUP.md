@@ -67,6 +67,8 @@ The first video takes a little longer while Reelhouse downloads a small browser 
 
 - **Trends:** click the **Trend Lookout** on the roof and press **Check trends now** to see what's popular this week. Autopilot uses these trends in its pitches on its own.
 
+- **Music:** every story gets its own background tune automatically. To use your own songs, put MP3 files in the `music` folder (see `music/README.md`). Only use music you have the rights to post.
+
 Finished videos appear in the `output` folder inside Reelhouse, each with a `caption.txt` ready to paste when you post.
 
 Reelhouse only works while the terminal from step 5 stays open. To stop it, press `Ctrl + C` in that terminal. To start it again later, open a terminal in the folder (step 3) and type `npm start`.
@@ -97,6 +99,7 @@ Claude writes stronger stories but costs a few cents per story. Get a key at htt
 | `PIPER_CHARACTER_VOICE` | Multi-speaker voice for characters | `en_US-libritts_r-medium` |
 | `REELHOUSE_VOICE` | `0` turns voiceover off | on |
 | `REELHOUSE_OUTPUT_DIR` | Where finished stories are saved | `./output` |
+| `REELHOUSE_MUSIC` | `0` turns background music off | on |
 | `REELHOUSE_SUBREDDITS` | Reddit communities the Trend Lookout reads, separated by commas | `aivideo,animation,WritingPrompts,shortstories` |
 | `REELHOUSE_TRENDS_RSS` | Google Trends feed (set it empty to skip Google Trends) | US daily trends |
 
